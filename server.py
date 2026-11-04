@@ -30,6 +30,7 @@ import threading
 from urllib.parse import urlparse, urljoin, quote
 
 import requests
+from requests.adapters import HTTPAdapter
 from bs4 import BeautifulSoup
 from flask import Flask, request, jsonify, Response, send_file, stream_with_context
 
@@ -105,6 +106,25 @@ def make_video_proxy():
     return {"http": VIDEO_PROXY, "https": VIDEO_PROXY} if VIDEO_PROXY else {}
 
 
+# общий пул keep-alive соединений: убирает TLS-рукопожатие на каждом
+# запросе к источнику/прокси (медиа-запросы ускоряются примерно втрое)
+_session = None
+_session_lock = threading.Lock()
+
+
+def _get_session():
+    global _session
+    if _session is None:
+        with _session_lock:
+            if _session is None:
+                s = requests.Session()
+                adapter = HTTPAdapter(pool_connections=64, pool_maxsize=64, max_retries=0)
+                s.mount("http://", adapter)
+                s.mount("https://", adapter)
+                _session = s
+    return _session
+
+
 def get_hdrezka_cookies():
     c = {}
     uid = os.environ.get("HDREZKA_USER_ID")
@@ -123,9 +143,16 @@ def json_error(message, code=500):
     return jsonify({"ok": False, "error": message}), code
 
 
+def json_cached(payload, ttl):
+    """JSON-ответ с разрешением браузерного кэша (повторное открытие — мгновенно)."""
+    resp = jsonify(payload)
+    resp.headers["Cache-Control"] = "private, max-age=%d" % ttl
+    return resp
+
+
 def http_get(url, timeout=25, video=False):
-    r = requests.get(url, headers=default_headers, timeout=timeout,
-                     proxies=make_video_proxy() if video else make_proxy())
+    r = _get_session().get(url, headers=default_headers, timeout=timeout,
+                           proxies=make_video_proxy() if video else make_proxy())
     return r
 
 
@@ -141,7 +168,7 @@ def abs_url(src):
 
 # ================================================================== KINOGO
 def kinogo_search(query):
-    r = requests.post(
+    r = _get_session().post(
         KINOGO_ORIGIN + "/",
         data={"do": "search", "subaction": "search", "story": query, "full_search": "1"},
         headers=default_headers, timeout=25, proxies=make_proxy(),
@@ -345,18 +372,28 @@ def kinogo_film(url):
     # прямые потоки (без рекламного iframe): фильм -> source:{...}, сериал -> seasons:[...]
     sources = []
     seasons = []
-    for i, p in enumerate(players):
-        try:
-            html = http_get(p["url"]).text
-        except Exception:
-            continue
-        src = _parse_movie_source(html)
-        if src and (src.get("hls") or src.get("mp4") or src.get("dash")):
-            src["title"] = p["title"]
-            sources.append(src)
-            continue
-        if not seasons:
-            seasons = _parse_serial_seasons(html)
+    if players:
+        from concurrent.futures import ThreadPoolExecutor
+
+        def _fetch_player(url):
+            try:
+                return http_get(url).text
+            except Exception:
+                return None
+
+        with ThreadPoolExecutor(max_workers=min(8, len(players))) as ex:
+            pages = list(ex.map(_fetch_player, [p["url"] for p in players]))
+
+        for p, html in zip(players, pages):
+            if not html:
+                continue
+            src = _parse_movie_source(html)
+            if src and (src.get("hls") or src.get("mp4") or src.get("dash")):
+                src["title"] = p["title"]
+                sources.append(src)
+                continue
+            if not seasons:
+                seasons = _parse_serial_seasons(html)
 
     if seasons:
         seasons.sort(key=lambda s: s.get("season") or 0)
@@ -622,7 +659,7 @@ def api_film():
     key = f"film:{url}"
     cached = cache_get(key, 600)
     if cached is not None:
-        return jsonify({"ok": True, "film": cached})
+        return json_cached({"ok": True, "film": cached}, 600)
 
     try:
         if detect_source(url) == "kinogo":
@@ -630,7 +667,7 @@ def api_film():
         else:
             film = hdrezka_film(url)
         cache_set(key, film)
-        return jsonify({"ok": True, "film": film})
+        return json_cached({"ok": True, "film": film}, 600)
     except Exception as e:
         return json_error(f"{type(e).__name__}: {e}")
 
@@ -644,7 +681,7 @@ def api_stream():
     key = f"stream:{url}:{request.args.get('season')}:{request.args.get('episode')}:{request.args.get('translation')}"
     cached = cache_get(key, 300)
     if cached is not None:
-        return jsonify({"ok": True, "stream": cached})
+        return json_cached({"ok": True, "stream": cached}, 300)
 
     try:
         if detect_source(url) == "kinogo":
@@ -678,7 +715,7 @@ def api_stream():
                 "subtitles": subtitles,
             }
         cache_set(key, data)
-        return jsonify({"ok": True, "stream": data})
+        return json_cached({"ok": True, "stream": data}, 300)
     except Exception as e:
         return json_error(f"{type(e).__name__}: {e}")
 
@@ -755,8 +792,8 @@ def api_proxy():
         headers["Range"] = request.headers["Range"]
 
     try:
-        upstream = requests.get(target, headers=headers, stream=True, timeout=30,
-                                proxies=make_video_proxy())
+        upstream = _get_session().get(target, headers=headers, stream=True, timeout=30,
+                                      proxies=make_video_proxy())
     except Exception as e:
         return json_error(f"{type(e).__name__}: {e}")
 
@@ -780,9 +817,12 @@ def api_proxy():
             resp_headers[h] = upstream.headers[h]
 
     def gen():
-        yield first
-        for chunk in it:
-            yield chunk
+        try:
+            yield first
+            for chunk in it:
+                yield chunk
+        finally:
+            upstream.close()  # вернуть соединение в пул (или закрыть при обрыве)
 
     return Response(stream_with_context(gen()), status=upstream.status_code, headers=resp_headers)
 
@@ -793,7 +833,7 @@ def api_subtitle():
     if not target:
         return json_error("Не передан url", 400)
     try:
-        r = requests.get(target, headers=default_headers, timeout=30, proxies=make_proxy())
+        r = _get_session().get(target, headers=default_headers, timeout=30, proxies=make_proxy())
         return Response(r.content, status=r.status_code,
                         headers={"Content-Type": "text/vtt; charset=utf-8", "Cache-Control": "no-store"})
     except Exception as e:

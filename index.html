@@ -138,8 +138,43 @@ main{padding-bottom:80px}
 .player-block{display:grid;grid-template-columns:1fr 310px;gap:22px;align-items:start}
 .video-shell{position:relative;background:#000;border-radius:22px;overflow:hidden;box-shadow:0 30px 80px rgba(0,0,0,.7),0 0 0 1px var(--line)}
 .video-shell video{width:100%;aspect-ratio:16/9;display:block;background:#000;border:0}
+/* фуллскрин: убираем скругления и не обрезаем шторку, видео вписываем по экрану */
+.video-shell:fullscreen{overflow:visible;border-radius:0;box-shadow:none}
+.video-shell:-webkit-full-screen{overflow:visible;border-radius:0;box-shadow:none}
+.video-shell:fullscreen video,.video-shell:-webkit-full-screen video{width:100%;height:100%;aspect-ratio:auto;object-fit:contain}
 .video-empty{aspect-ratio:16/9;display:grid;place-items:center;text-align:center;color:var(--muted)}
 .video-empty .big{font-size:46px;margin-bottom:10px}
+/* ---------- плеер: кастомные контролы + жесты ---------- */
+.video-shell:not(.ready) .vgest,.video-shell:not(.ready) .vctl{display:none}
+.vgest{position:absolute;inset:0;z-index:5;touch-action:none}
+.vhud{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);z-index:8;pointer-events:none;opacity:0;transition:opacity .2s}
+.vhud.show{opacity:1}
+.vhud-in{display:flex;align-items:center;gap:9px;background:rgba(8,8,12,.8);border:1px solid rgba(255,255,255,.12);border-radius:14px;padding:11px 16px;font-size:13.5px;font-weight:700;color:#fff;backdrop-filter:blur(10px);white-space:nowrap}
+.vhud-in svg{width:18px;height:18px;color:var(--gold);flex:none}
+.vctl{position:absolute;left:0;right:0;bottom:0;z-index:6;display:flex;flex-direction:column;gap:7px;padding:30px 14px 12px;background:linear-gradient(0deg,rgba(0,0,0,.88),rgba(0,0,0,.45) 60%,transparent);opacity:0;pointer-events:none;transition:opacity .22s}
+.vc-line{display:flex;align-items:center;gap:9px;min-width:0}
+.vc-spacer{flex:1;min-width:6px}
+.video-shell.ctls .vctl{opacity:1;pointer-events:auto}
+.vc-btn{flex:none;width:40px;height:40px;border-radius:50%;border:0;background:rgba(255,255,255,.14);color:#fff;display:grid;place-items:center;transition:.18s}
+.vc-btn:hover{background:rgba(255,255,255,.26)}
+.vc-btn:active{transform:scale(.9)}
+.vc-btn svg{width:21px;height:21px}
+.vc-btn.wide{width:auto;height:34px;padding:0 13px;border-radius:11px;font-size:13px;font-weight:800;font-variant-numeric:tabular-nums}
+.vc-btn.wide span{display:block;max-width:28vw;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.vc-t{flex:none;font-size:12px;font-weight:600;color:#dcdce6;font-variant-numeric:tabular-nums;min-width:38px;text-align:center}
+.vc-bar{position:relative;flex:1;min-width:40px;height:22px;display:flex;align-items:center;cursor:pointer;touch-action:none}
+.vc-rail{position:relative;width:100%;height:5px;border-radius:3px;background:rgba(255,255,255,.26);overflow:hidden}
+.vc-buf{position:absolute;left:0;top:0;bottom:0;width:0;background:rgba(255,255,255,.36)}
+.vc-prog{position:absolute;left:0;top:0;bottom:0;width:0;background:linear-gradient(90deg,var(--gold2),var(--gold))}
+.vc-dot{position:absolute;top:50%;left:0;width:13px;height:13px;border-radius:50%;background:var(--gold);transform:translate(-50%,-50%);box-shadow:0 0 0 4px rgba(245,184,61,.28);pointer-events:none}
+@media(max-width:640px){
+  .vctl{gap:6px;padding:24px 10px 9px}
+  .vc-line{gap:7px}
+  .vc-btn{width:36px;height:36px}
+  .vc-btn.wide{padding:0 9px;height:32px;font-size:12px}
+  .vc-btn.wide span{max-width:14vw}
+  .vc-t{min-width:34px;font-size:11px}
+}
 .panel{background:var(--glass);border:1px solid var(--line);border-radius:var(--r);padding:18px;backdrop-filter:blur(14px)}
 .panel+.panel{margin-top:14px}
 .panel label{display:flex;align-items:center;justify-content:space-between;font-size:11px;text-transform:uppercase;letter-spacing:1.4px;color:var(--muted);margin-bottom:12px;font-weight:700}
@@ -528,12 +563,29 @@ body.chat-open .chatdock .room-chat{display:flex}
         <div>
           <div class="video-shell">
             <div class="video-empty" id="videoEmpty"><div><div class="big">🎬</div>Готовим плеер…</div></div>
-            <video id="player" class="hidden" controls playsinline webkit-playsinline></video>
+            <video id="player" class="hidden" playsinline webkit-playsinline tabindex="0"></video>
+            <div class="vgest" id="vGest">
+              <div class="vhud" id="vHud"><div class="vhud-in"><span id="vHudIco"></span><b id="vHudTxt"></b></div></div>
+            </div>
+            <div class="vctl" id="vCtl">
+              <div class="vc-line">
+                <span class="vc-t" id="vcCur">0:00</span>
+                <div class="vc-bar" id="vcBar"><div class="vc-rail"><div class="vc-buf" id="vcBuf"></div><div class="vc-prog" id="vcProg"></div></div><div class="vc-dot" id="vcDot"></div></div>
+                <span class="vc-t" id="vcDur">0:00</span>
+              </div>
+              <div class="vc-line">
+                <button class="vc-btn" id="vcPlay" aria-label="Пуск/пауза"></button>
+                <button class="vc-btn wide" id="vcQual" aria-label="Качество"><span>Авто</span></button>
+                <button class="vc-btn wide" id="vcAudio" aria-label="Озвучка"><span>—</span></button>
+                <span class="vc-spacer"></span>
+                <button class="vc-btn wide" id="vcRate" aria-label="Скорость"><span>1x</span></button>
+                <button class="vc-btn" id="vcPip" aria-label="Картинка в картинке"></button>
+                <button class="vc-btn" id="vcFull" aria-label="Во весь экран"></button>
+              </div>
+            </div>
           </div>
           <div class="ctrl" id="ctrlBar">
             <button class="chip back-chip" id="cBack" aria-label="Назад">‹</button>
-            <button class="chip" data-sheet="quality"><span>Качество</span><b id="cQual">—</b></button>
-            <button class="chip" data-sheet="audio"><span>Озвучка</span><b id="cAudio">—</b></button>
             <button class="chip" data-sheet="subs"><span>Субтитры</span><b id="cSubs">Выкл</b></button>
             <button class="chip" id="cRoom" aria-label="Смотреть вместе"><span>Вместе</span><b id="cRoomTxt">включить</b></button>
             <button class="chip hidden" id="cPlayerChip" data-sheet="player"><span>Плеер</span><b id="cPlayer">—</b></button>
@@ -663,6 +715,14 @@ const state = { film:null, rows:[], featured:[], featIdx:0, lastView:"home", sea
 let hls = null, dash = null;
 const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 
+/* запоминаем выбранные пользователем озвучку и качество между фильмами */
+const PREF = {
+  audio(){ try{ return localStorage.getItem("k88:prefAudio") || ""; }catch(e){ return ""; } },
+  setAudio(v){ try{ v ? localStorage.setItem("k88:prefAudio", v) : localStorage.removeItem("k88:prefAudio"); }catch(e){} },
+  qual(){ try{ return localStorage.getItem("k88:prefQual") || ""; }catch(e){ return ""; } },
+  setQual(v){ try{ localStorage.setItem("k88:prefQual", String(v)); }catch(e){} }
+};
+
 function toast(msg, kind){
   const t = $("toast"); t.textContent = msg; t.className = "toast show " + (kind||"");
   clearTimeout(t._t); t._t = setTimeout(()=>t.classList.remove("show"), 3400);
@@ -712,6 +772,14 @@ function paintViews(){
     e.textContent = n > 0 ? "👁 " + fmtViews(n) : "👁 новинка";
   });
 }
+/* предзагрузка данных фильма при наведении — открытие становится мгновенным */
+const _prefetched = new Set();
+function prefetchFilm(url){
+  if(!url || _prefetched.has(url)) return;
+  _prefetched.add(url);
+  fetch("/api/film?url=" + encodeURIComponent(url)).catch(() => _prefetched.delete(url));
+}
+let _pfTimer = null;
 function cardEl(it){
   const c = document.createElement("div");
   c.className = "card";
@@ -722,7 +790,10 @@ function cardEl(it){
   c.innerHTML = `<div class="poster-box">${img}${it.year?`<span class="yr">${it.year}</span>`:""}<div class="play">▶</div></div>
     <div class="t">${esc(it.title)}</div>
     <div class="fv" data-k="${viewKey(it.url)}">👁 новинка</div>`;
-  c.onclick = () => openFilm(it.url);
+  c.onclick = () => { clearTimeout(_pfTimer); openFilm(it.url); };
+  c.onmouseenter = () => { clearTimeout(_pfTimer); _pfTimer = setTimeout(() => prefetchFilm(it.url), 160); };
+  c.onmouseleave = () => clearTimeout(_pfTimer);
+  c.ontouchstart = () => prefetchFilm(it.url);
   return c;
 }
 
@@ -777,6 +848,7 @@ function setHero(){
   $("heroTitle").textContent = it.title;
   $("heroMeta").innerHTML = (it.year ? `<span class="pill-m g">${it.year}</span>` : "") + `<span class="pill-m">Смотреть онлайн</span><span class="pill-m">HD</span>`;
   $("heroPlay").onclick = $("heroPoster").onclick = () => openFilm(it.url);
+  prefetchFilm(it.url);
 }
 $("heroNext").onclick = () => { state.featIdx = (state.featIdx + 1) % state.featured.length; setHero(); };
 
@@ -939,15 +1011,6 @@ function qualNum(w, h){
 }
 
 /* ---------- качество: HLS ---------- */
-/* Выбор максимального качества. Уровни hls.js с одинаковой высотой (failover-дубли) схлопываются. */
-function bestLevelIndex(){
-  let best = -1, q = -1, bw = -1;
-  hls.levels.forEach((l, i) => {
-    const qq = qualNum(l.width, l.height);
-    if(qq > q || (qq === q && l.bitrate > bw)){ best = i; q = qq; bw = l.bitrate; }
-  });
-  return best;
-}
 function renderHlsLevels(){
   const box = $("qualityPills"); box.innerHTML = "";
   if(!hls || !hls.levels || !hls.levels.length){ box.innerHTML = `<span class="muted-s">авто</span>`; return; }
@@ -963,13 +1026,13 @@ function renderHlsLevels(){
     .sort((a, b) => b.q - a.q || b.i - a.i);
   const auto = document.createElement("button");
   auto.className = "pill"; auto.textContent = "Авто"; auto.dataset.level = "-1";
-  auto.onclick = () => { hls.currentLevel = -1; markLevel(); };
+  auto.onclick = () => { hls.currentLevel = -1; markLevel(); PREF.setQual("auto"); };
   box.appendChild(auto);
   items.forEach(({i, q, label}) => {
     const b = document.createElement("button");
     b.className = "pill"; b.dataset.level = i;
     b.innerHTML = esc(label) + (q >= 1080 ? "<small>FHD</small>" : q >= 720 ? "<small>HD</small>" : "");
-    b.onclick = () => { hls.currentLevel = i; markLevel(); };
+    b.onclick = () => { hls.currentLevel = i; markLevel(); if(q) PREF.setQual(q); };
     box.appendChild(b);
   });
   const max = Math.max(...items.map(x => x.q));
@@ -984,6 +1047,22 @@ function markLevel(){
     const same = lv === cur || (cur >= 0 && hls.levels[lv] && hls.levels[cur] && hls.levels[lv].height === hls.levels[cur].height && lv >= 0);
     p.classList.toggle("active", same);
   });
+}
+
+/* стартовое качество: последнее выбранное пользователем, иначе авто (ABR сам
+   подбирает битрейт под реальную скорость — так воспроизведение без тормозов) */
+function applyQualityPref(){
+  if(!hls || !hls.levels || !hls.levels.length) return;
+  const p = PREF.qual();
+  if(p && p !== "auto"){
+    const want = parseInt(p, 10);
+    if(want){
+      let idx = -1, bw = -1;
+      hls.levels.forEach((l, i) => { if(qualNum(l.width, l.height) === want && l.bitrate > bw){ idx = i; bw = l.bitrate; } });
+      if(idx >= 0){ hls.currentLevel = idx; return; }
+    }
+  }
+  hls.currentLevel = -1;
 }
 
 /* ---------- качество: DASH ---------- */
@@ -1008,13 +1087,13 @@ function renderDashLevels(){
     .sort((a, b) => b.n - a.n || b.q - a.q);
   const auto = document.createElement("button");
   auto.className = "pill"; auto.dataset.level = "-1"; auto.textContent = "Авто";
-  auto.onclick = () => { setDashQuality(null); };
+  auto.onclick = () => { setDashQuality(null); PREF.setQual("auto"); };
   box.appendChild(auto);
   items.forEach(({q, n, label}) => {
     const b = document.createElement("button");
     b.className = "pill"; b.dataset.level = q;
     b.innerHTML = esc(label) + (n >= 1080 ? "<small>FHD</small>" : n >= 720 ? "<small>HD</small>" : "");
-    b.onclick = () => setDashQuality(q);
+    b.onclick = () => { setDashQuality(q); if(n) PREF.setQual(n); };
     box.appendChild(b);
   });
   $("qualBadge").textContent = items.length ? "до " + items[0].n + "p" : "";
@@ -1060,6 +1139,13 @@ function pickAudioIndex(tracks, names){
   }
   return first < 0 ? 0 : first;
 }
+/* если пользователь раньше выбирал дорожку с таким названием — берём её */
+function prefAudioIndex(labels, fallback){
+  const p = PREF.audio();
+  if(!p) return fallback;
+  const i = (labels || []).findIndex(l => String(l).trim() === p);
+  return i >= 0 ? i : fallback;
+}
 function playDash(source){
   const video = $("player");
   dash = dashjs.MediaPlayer().create();
@@ -1069,17 +1155,18 @@ function playDash(source){
     const names = source.audio || [];
     const tr = dashAudioTracks();
     if(tr.length){
-      const idx = pickAudioIndex(tr, names);
-      renderAudio(tr.map((t, i) => names[i] || t.lang || t.name || ("Дорожка " + (i+1))), idx);
+      const labels = tr.map((t, i) => names[i] || t.lang || t.name || ("Дорожка " + (i+1)));
+      const idx = prefAudioIndex(labels, pickAudioIndex(tr, names));
+      renderAudio(labels, idx);
       setDashAudio(idx);                         // по умолчанию — русская дорожка
     }
     const list = dashLevels();
     if(list.length){
-      const top = list.reduce((a, b) => {
-        const qa = qualNum(a.width, a.height), qb = qualNum(b.width, b.height);
-        return (qb > qa || (qb === qa && b.bitrate > a.bitrate)) ? b : a;
-      }, list[0]);
-      setDashQuality(top.qualityIndex);         // по умолчанию — максимальное качество
+      const p = PREF.qual();
+      const want = p && p !== "auto" ? parseInt(p, 10) : 0;
+      const hit = want ? list.find(l => qualNum(l.width, l.height) === want) : null;
+      /* без сохранённого выбора — авто (dash.js сам подбирает битрейт под скорость) */
+      setDashQuality(hit ? hit.qualityIndex : null);
     }
     video.play().catch(() => {});
   });
@@ -1096,8 +1183,11 @@ function renderAudio(names, selIdx){
   sel.value = String(selIdx || 0);
 }
 $("translationSelect").onchange = () => {
-  const i = parseInt($("translationSelect").value) || 0;
+  const sel = $("translationSelect");
+  const i = parseInt(sel.value) || 0;
   if(hls) hls.audioTrack = i; else if(dash) setDashAudio(i);
+  const label = (sel.options[sel.selectedIndex] || {}).textContent;
+  PREF.setAudio(label && label !== "Оригинальная дорожка" ? label : "");
 };
 
 function playHls(source){
@@ -1121,16 +1211,21 @@ function playHls(source){
   }
   const url = "/api/proxy?url=" + encodeURIComponent(source.hls || source.mp4);
   if(source.hls && window.Hls && Hls.isSupported()){
-    hls = new Hls({ maxBufferLength: 40, enableWorker: true, capLevelToPlayerSize: false, startLevel: -1, abrEwmaDefaultEstimate: 12e6 });
+    hls = new Hls({
+      maxBufferLength: 60, maxBufferSize: 80 * 1000 * 1000, backBufferLength: 30,
+      fragLoadingMaxRetry: 6, fragLoadingRetryDelay: 400,
+      enableWorker: true, capLevelToPlayerSize: false, startLevel: -1,
+      abrEwmaDefaultEstimate: 5e6, abrBandWidthFactor: 0.8, abrBandWidthUpFactor: 0.6
+    });
     hls.loadSource(url); hls.attachMedia(video);
     hls.on(Hls.Events.MANIFEST_PARSED, () => {
       renderHlsLevels();
-      const best = bestLevelIndex();
-      if(best >= 0) hls.currentLevel = best;        // по умолчанию — максимальное качество
+      applyQualityPref();                           // последнее выбранное качество или максимальное
       if(hls.audioTracks && hls.audioTracks.length){
         const names = source.audio || [];
-        const idx = pickAudioIndex(hls.audioTracks, names);
-        renderAudio(hls.audioTracks.map((t, i) => names[i] || t.name || t.lang || "Дорожка"), idx);
+        const labels = hls.audioTracks.map((t, i) => names[i] || t.name || t.lang || "Дорожка");
+        const idx = prefAudioIndex(labels, pickAudioIndex(hls.audioTracks, names));
+        renderAudio(labels, idx);
         hls.audioTrack = idx;                      // по умолчанию — русская дорожка
       }
       markLevel();
@@ -1242,8 +1337,11 @@ function sheetFor(kind){
 document.querySelectorAll("#ctrlBar .chip").forEach(c => c.onclick = () => sheetFor(c.dataset.sheet));
 function syncCtrl(){
   const act = $("qualityPills").querySelector(".pill.active"), any = $("qualityPills").querySelector(".pill");
-  $("cQual").textContent = act ? pillTxt(act) : (any ? "Авто" : "—");
-  const sel = $("translationSelect"); $("cAudio").textContent = (sel.options[sel.selectedIndex] || {}).textContent || "—";
+  const qTxt = act ? pillTxt(act) : (any ? "Авто" : "—");
+  const sel = $("translationSelect"); const aTxt = (sel.options[sel.selectedIndex] || {}).textContent || "—";
+  const vq = $("vcQual"), va = $("vcAudio");
+  if(vq) vq.firstElementChild.textContent = qTxt;
+  if(va) va.firstElementChild.textContent = aTxt;
   const tr = $("player").querySelector("track"); $("cSubs").textContent = tr ? tr.label : "Выкл";
   const ap = $("playerPills").querySelector(".pill.active");
   $("cPlayerChip").classList.toggle("hidden", $("panelPlayers").classList.contains("hidden"));
@@ -1307,6 +1405,195 @@ $("player").addEventListener("ended", () => {
   if(state.film && state.film.isSeries){ if(stepEp(1)) toast("Следующая серия", "ok"); }
   else if(state.url){ try{ localStorage.removeItem(pkey()); }catch(e){} }
 });
+
+/* ================= плеер: кастомные контролы + жесты ================= */
+(function(){
+  const vp = $("player");
+  const shell = vp.closest(".video-shell");
+  const ges = $("vGest"), hud = $("vHud"), bar = $("vcBar"), hudIco = $("vHudIco"), hudTxt = $("vHudTxt");
+  const prog = $("vcProg"), buf = $("vcBuf"), dot = $("vcDot"), rateBtn = $("vcRate"), playBtn = $("vcPlay");
+  const ICO = {
+    play: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>',
+    pause: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 5h4v14H6zM14 5h4v14h-4z"/></svg>',
+    pip: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="5" width="18" height="14" rx="2"/><rect x="12" y="11" width="7" height="5" rx="1" fill="currentColor" stroke="none"/></svg>',
+    full: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg>',
+    vol: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9v6h4l5 4V5L8 9H4z"/><path d="M17 9a5 5 0 0 1 0 6"/></svg>',
+    bri: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4.2"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9 7 7M17 17l2.1 2.1M19.1 4.9 17 7M7 17l-2.1 2.1"/></svg>',
+    seekL: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M11 6v12L4 12zM20 6v12l-7-6z"/></svg>',
+    seekR: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M13 6v12l7-6zM4 6v12l7-6z"/></svg>'
+  };
+  playBtn.innerHTML = ICO.pause;
+  $("vcPip").innerHTML = ICO.pip;
+  $("vcFull").innerHTML = ICO.full;
+
+  const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
+  const clock = t => {
+    t = Math.max(0, Math.floor(t || 0));
+    const h = Math.floor(t/3600), m = Math.floor(t%3600/60), s = t%60;
+    return (h ? h + ":" + String(m).padStart(2,"0") : String(m)) + ":" + String(s).padStart(2,"0");
+  };
+
+  /* ---- панель управления ---- */
+  let hideT = null, scrubbing = false;
+  function showCtl(){ shell.classList.add("ctls"); clearTimeout(hideT); hideT = setTimeout(() => { if(!vp.paused && !scrubbing) shell.classList.remove("ctls"); }, 3200); }
+  function hideCtl(){ shell.classList.remove("ctls"); clearTimeout(hideT); }
+  function setPlayIcon(){ playBtn.innerHTML = vp.paused ? ICO.play : ICO.pause; }
+  function togglePlay(){ if(vp.paused) vp.play().catch(() => {}); else vp.pause(); }
+
+  playBtn.onclick = e => { e.stopPropagation(); togglePlay(); showCtl(); };
+  vp.addEventListener("play", () => { setPlayIcon(); showCtl(); });
+  vp.addEventListener("pause", setPlayIcon);
+  vp.addEventListener("ended", setPlayIcon);
+
+  /* десктоп: панель появляется при наведении мыши на плеер */
+  shell.addEventListener("mousemove", () => { if(!vp.classList.contains("hidden")) showCtl(); });
+  shell.addEventListener("mouseleave", () => { if(!vp.paused) hideCtl(); });
+
+  function paintProgress(){
+    const d = vp.duration || 0, c = vp.currentTime || 0, p = d ? c/d : 0;
+    prog.style.width = (p*100) + "%";
+    dot.style.left = (p*100) + "%";
+    $("vcCur").textContent = clock(c);
+    $("vcDur").textContent = d ? clock(d) : "0:00";
+  }
+  ["timeupdate","loadedmetadata","durationchange","seeked"].forEach(ev => vp.addEventListener(ev, paintProgress));
+  vp.addEventListener("progress", () => {
+    try{ if(vp.buffered.length && vp.duration) buf.style.width = (vp.buffered.end(vp.buffered.length-1)/vp.duration*100) + "%"; }catch(e){}
+  });
+
+  /* ---- перемотка по полосе ---- */
+  const bx = e => { const r = bar.getBoundingClientRect(); return clamp((e.clientX - r.left) / r.width, 0, 1); };
+  function seekClientX(e){ if(!vp.duration) return; try{ vp.currentTime = bx(e) * vp.duration; }catch(err){} paintProgress(); }
+  bar.addEventListener("pointerdown", e => { e.stopPropagation(); scrubbing = true; try{ bar.setPointerCapture(e.pointerId); }catch(err){} seekClientX(e); showCtl(); });
+  bar.addEventListener("pointermove", e => { if(scrubbing) seekClientX(e); });
+  const stopScrub = () => { if(!scrubbing) return; scrubbing = false; showCtl(); };
+  bar.addEventListener("pointerup", stopScrub);
+  bar.addEventListener("pointercancel", stopScrub);
+
+  /* ---- скорость ---- */
+  function paintRate(){ rateBtn.firstElementChild.textContent = (vp.playbackRate === 1 ? 1 : +vp.playbackRate.toFixed(2)) + "x"; }
+  rateBtn.onclick = e => {
+    e.stopPropagation(); if(typeof hap === "function") hap();
+    openSheet("Скорость воспроизведения", [0.5,0.75,1,1.25,1.5,2].map(r => ({
+      label: r === 1 ? "Обычная (1x)" : r + "x",
+      on: Math.abs(vp.playbackRate - r) < 0.01,
+      pick: () => { vp.playbackRate = r; paintRate(); }
+    })));
+  };
+  paintRate();
+
+  /* ---- качество и озвучка прямо в панели ---- */
+  $("vcQual").onclick = e => { e.stopPropagation(); if(typeof hap === "function") hap(); sheetFor("quality"); showCtl(); };
+  $("vcAudio").onclick = e => { e.stopPropagation(); if(typeof hap === "function") hap(); sheetFor("audio"); showCtl(); };
+
+  /* ---- картинка в картинке и полный экран ---- */
+  const pipBtn = $("vcPip");
+  if(!document.pictureInPictureEnabled) pipBtn.style.display = "none";
+  pipBtn.onclick = async e => {
+    e.stopPropagation();
+    try{
+      if(document.pictureInPictureElement) await document.exitPictureInPicture();
+      else await vp.requestPictureInPicture();
+    }catch(err){ toast("Картинка в картинке недоступна"); }
+  };
+  const fsBtn = $("vcFull");
+  const fsEl = () => document.fullscreenElement || document.webkitFullscreenElement;
+  fsBtn.onclick = e => {
+    e.stopPropagation();
+    if(fsEl()){ (document.exitFullscreen || document.webkitExitFullscreen).call(document); return; }
+    if(shell.requestFullscreen) shell.requestFullscreen().catch(() => {});
+    else if(shell.webkitRequestFullscreen) shell.webkitRequestFullscreen();
+    else if(vp.webkitEnterFullscreen) vp.webkitEnterFullscreen();
+  };
+
+  /* В фуллскрине браузер рисует только содержимое fullscreen-элемента, поэтому
+     шторку (качество/озвучка/субтитры) переносим внутрь плеера и возвращаем обратно. */
+  const sheetBg = $("sheetBg"), sheetHome = sheetBg.parentNode;
+  const fsSync = () => {
+    if(fsEl() === shell){
+      if(sheetBg.parentNode !== shell) shell.appendChild(sheetBg);
+    }else if(sheetBg.parentNode === shell){
+      sheetHome.appendChild(sheetBg);
+    }
+  };
+  document.addEventListener("fullscreenchange", fsSync);
+  document.addEventListener("webkitfullscreenchange", fsSync);
+
+  /* ---- жесты ---- */
+  let brightness = 1, sx = 0, sy = 0, base = 0, mode = "", moved = false, active = false;
+  let lastTap = 0, lastTapX = 0, tapT = null, hudT = null;
+  function hudShow(ico, txt){
+    hudIco.innerHTML = ico || ""; hudTxt.textContent = txt;
+    hud.classList.add("show"); clearTimeout(hudT);
+    hudT = setTimeout(() => hud.classList.remove("show"), 750);
+  }
+  function seekBy(d){
+    if(!vp.duration) return;
+    vp.currentTime = clamp((vp.currentTime || 0) + d, 0, vp.duration);
+    paintProgress();
+    hudShow(d < 0 ? ICO.seekL : ICO.seekR, (d > 0 ? "+" : "") + d + " сек");
+  }
+  function tap(e){
+    const t = Date.now();
+    if(t - lastTap < 320 && Math.abs(e.clientX - lastTapX) < 70){
+      lastTap = 0; clearTimeout(tapT);
+      seekBy(e.clientX - ges.getBoundingClientRect().left < ges.clientWidth/2 ? -10 : 10);
+      if(typeof hap === "function") hap();
+      return;
+    }
+    lastTap = t; lastTapX = e.clientX; clearTimeout(tapT);
+    tapT = setTimeout(() => {
+      if(e.pointerType === "mouse") togglePlay();
+      else if(shell.classList.contains("ctls")) hideCtl();
+      else showCtl();
+      if(typeof hap === "function") hap("s");
+    }, 330);
+  }
+  ges.addEventListener("pointerdown", e => {
+    if(e.button > 0) return;
+    active = true; moved = false; mode = ""; sx = e.clientX; sy = e.clientY;
+    try{ ges.setPointerCapture(e.pointerId); }catch(err){}
+  });
+  ges.addEventListener("pointermove", e => {
+    if(!active) return;
+    const dx = e.clientX - sx, dy = e.clientY - sy;
+    if(!mode){
+      if(Math.abs(dx) < 12 && Math.abs(dy) < 12) return;
+      moved = true;
+      if(Math.abs(dx) > Math.abs(dy)){ mode = "seek"; base = vp.currentTime || 0; }
+      else { mode = (sx - ges.getBoundingClientRect().left) < ges.clientWidth/2 ? "bri" : "vol"; base = mode === "bri" ? brightness : vp.volume; }
+    }
+    if(mode === "seek"){
+      if(!vp.duration) return;
+      const dur = vp.duration, delta = dx / ges.clientWidth * Math.min(dur, 240);
+      vp.currentTime = clamp(base + delta, 0, dur);
+      paintProgress();
+      hudShow(null, clock(vp.currentTime) + " / " + clock(dur));
+    }else{
+      const delta = -dy / (ges.clientHeight * 0.72);
+      if(mode === "bri"){
+        brightness = clamp(base + delta, 0.2, 1.6);
+        vp.style.filter = "brightness(" + brightness + ")";
+        hudShow(ICO.bri, "Яркость " + Math.round(brightness*100) + "%");
+      }else{
+        const vol = clamp(base + delta, 0, 1);
+        vp.volume = vol; vp.muted = vol === 0;
+        hudShow(ICO.vol, "Звук " + Math.round(vol*100) + "%");
+      }
+    }
+  });
+  ges.addEventListener("pointerup", e => {
+    if(!active) return; active = false;
+    if(!moved && !mode) tap(e);
+    moved = false; mode = "";
+  });
+  ges.addEventListener("pointercancel", () => { active = false; moved = false; mode = ""; });
+
+  /* ---- оверлей показываем только когда плеер активен ---- */
+  const syncReady = () => shell.classList.toggle("ready", !vp.classList.contains("hidden"));
+  new MutationObserver(syncReady).observe(vp, { attributes:true, attributeFilter:["class"] });
+  syncReady(); setPlayIcon(); paintProgress();
+})();
 
 buildGenres(); loadHome(); updateHeader();
 /* глубокая ссылка из Telegram-бота: /?u=<фильм>&s=<сезон>&e=<серия> */
