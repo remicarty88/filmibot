@@ -46,6 +46,11 @@ BOT_TOKEN = os.environ.get(
     "BOT_TOKEN", "9126447892:AAGcNF_9xjJ7yvsogf3yEmYDXss-7c3AGDs"
 ).strip()
 WEB_BASE_URL = os.environ.get("WEB_BASE_URL", "").strip().rstrip("/")
+if not WEB_BASE_URL:
+    # на Railway публичный домен подставляется автоматически
+    _d = os.environ.get("RAILWAY_PUBLIC_DOMAIN", "").strip().rstrip("/")
+    if _d:
+        WEB_BASE_URL = "https://" + _d
 PAGE_SIZE = 6
 CAPTION_LIMIT = 900
 
