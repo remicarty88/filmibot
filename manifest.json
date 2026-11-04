@@ -1,0 +1,21 @@
+{
+  "id": "/",
+  "name": "Кино-88 — фильмы и сериалы",
+  "short_name": "Кино-88",
+  "description": "Онлайн-кинотеатр: фильмы, сериалы и аниме. Смотрите вместе — комнаты, чат и голосовая связь.",
+  "lang": "ru",
+  "dir": "ltr",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "display_override": ["standalone", "minimal-ui"],
+  "orientation": "any",
+  "background_color": "#07070a",
+  "theme_color": "#07070a",
+  "categories": ["entertainment", "video"],
+  "icons": [
+    { "src": "/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

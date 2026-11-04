@@ -442,6 +442,36 @@ def index():
     return send_file(os.path.join(BASE_DIR, "index.html"))
 
 
+# ---------------------------------------------------------------- PWA (манифест, иконки, SW)
+@app.route("/manifest.json")
+def manifest():
+    return send_file(
+        os.path.join(BASE_DIR, "manifest.json"),
+        mimetype="application/manifest+json",
+    )
+
+
+@app.route("/sw.js")
+def service_worker():
+    r = send_file(os.path.join(BASE_DIR, "sw.js"), mimetype="application/javascript")
+    r.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
+    r.headers["Service-Worker-Allowed"] = "/"
+    return r
+
+
+@app.route("/icon-<string:name>.png")
+def icon(name):
+    path = os.path.join(BASE_DIR, "icon-%s.png" % name)
+    if not os.path.exists(path):
+        return ("", 404)
+    return send_file(path, mimetype="image/png")
+
+
+@app.route("/apple-touch-icon.png")
+def apple_icon():
+    return send_file(os.path.join(BASE_DIR, "apple-touch-icon.png"), mimetype="image/png")
+
+
 
 # ================================================================== КАТАЛОГ ГЛАВНОЙ
 HOME_ROWS = [

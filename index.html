@@ -4,6 +4,16 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <meta name="theme-color" content="#07070a">
+<meta name="color-scheme" content="dark">
+<meta name="description" content="Кино-88 — фильмы, сериалы и аниме онлайн. Смотреть вместе: комнаты, чат и голос.">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Кино-88">
+<meta name="application-name" content="Кино-88">
+<link rel="manifest" href="/manifest.json">
+<link rel="icon" type="image/png" sizes="192x192" href="/icon-192.png">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
 <title>Кино-88 — смотреть фильмы и сериалы онлайн</title>
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -228,7 +238,9 @@ footer b{font-family:var(--f-head);color:var(--txt)}
   .tabbar button{outline:0;-webkit-appearance:none;appearance:none;box-shadow:none;background:none}
   .tabbar button:focus,.tabbar button:active{outline:0;background:none}
   .tabbar button svg{width:24px;height:24px;display:block;overflow:visible}
-  
+  .tabbar button .tb-ava{width:24px;height:24px;border-radius:50%;display:grid;place-items:center;font-size:11px;font-weight:800;color:#8a8794;background:rgba(255,255,255,.1)}
+  .tabbar button .tb-ava.on{color:#160f02}
+  .tabbar button.on .tb-ava{box-shadow:0 0 0 2px rgba(245,184,61,.6)}
   .tabbar button.on{color:var(--gold)}
   body.in-film .tabbar,body.in-film header{display:none}
   .toast{bottom:calc(86px + var(--sb))}body.in-film .toast{bottom:calc(20px + var(--sb))}
@@ -297,20 +309,37 @@ footer b{font-family:var(--f-head);color:var(--txt)}
 .mem{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:600;padding:5px 10px;border-radius:999px;background:var(--glass);border:1px solid var(--line);max-width:100%}
 .mem .ava{width:16px;height:16px;border-radius:50%;display:grid;place-items:center;font-size:9px;font-weight:800;color:#120c02;flex:none}
 .mem.host{border-color:rgba(245,184,61,.5);color:var(--gold2)}
-.room-chat{flex:1;overflow:auto;padding:14px 16px;display:flex;flex-direction:column;gap:9px;overscroll-behavior:contain}
-.msg{max-width:86%;align-self:flex-start;background:var(--glass);border:1px solid var(--line);border-radius:14px 14px 14px 4px;padding:8px 12px;font-size:14px;line-height:1.45;word-break:break-word}
-.msg.me{align-self:flex-end;background:linear-gradient(135deg,var(--gold2),var(--gold));color:#1a1204;border-color:transparent;border-radius:14px 14px 4px 14px}
+.room-chat{flex:1;overflow:auto;padding:14px 14px 8px;display:flex;flex-direction:column;gap:2px;overscroll-behavior:contain;scrollbar-width:thin}
+.room-chat::-webkit-scrollbar{width:6px}.room-chat::-webkit-scrollbar-thumb{background:rgba(255,255,255,.12);border-radius:3px}
+.chat-empty{margin:auto;text-align:center;color:var(--muted);font-size:13px;line-height:1.6;padding:18px 26px;max-width:280px}
+.chat-empty b{display:block;font-size:26px;margin-bottom:8px}
+.msg{display:flex;align-items:flex-end;gap:8px;max-width:100%}
+.msg:not(.grp){margin-top:8px}
+.msg .ava{width:26px;height:26px;border-radius:50%;display:grid;place-items:center;font-size:11px;font-weight:800;color:#120c02;flex:none;margin-bottom:1px}
+.msg.grp .ava{visibility:hidden}
+.mbody{max-width:76%;background:var(--glass);border:1px solid var(--line);border-radius:15px 15px 15px 5px;padding:8px 12px;font-size:14px;line-height:1.45;word-break:break-word}
+.msg.grp .mbody{border-radius:15px}
 .msg .who{display:block;font-size:11px;font-weight:700;color:var(--gold2);margin-bottom:2px}
-.msg.me .who{display:none}
-.msg.sys{align-self:center;background:none;border:0;color:var(--muted);font-size:12px;max-width:100%;text-align:center}
-.room-in{display:flex;gap:8px;padding:10px 12px;border-top:1px solid var(--line)}
-.room-in input{flex:1;min-width:0;background:rgba(0,0,0,.4);border:1px solid var(--line);border-radius:12px;color:var(--txt);font-size:15px;padding:11px 13px;outline:0}
-.room-in input:focus{border-color:var(--gold)}
-.room-in button{flex:none;width:46px;border-radius:12px;border:0;background:linear-gradient(135deg,var(--gold2),var(--gold));color:#1a1204;font-size:17px;font-weight:800}
-.room-actions{display:flex;flex-direction:column;gap:8px;padding:12px 16px calc(14px + env(safe-area-inset-bottom,0px))}
-.room-actions button{display:flex;align-items:center;justify-content:center;gap:8px;border-radius:12px;border:1px solid var(--line);background:var(--glass);color:var(--txt);font-size:14px;font-weight:600;padding:12px}
+.msg.grp .who{display:none}
+.mtxt{white-space:pre-wrap;overflow-wrap:anywhere}
+.mtime{display:inline-block;font-size:10px;color:var(--muted);margin-left:8px;vertical-align:baseline;font-variant-numeric:tabular-nums}
+.msg.me{align-self:flex-end;flex-direction:row-reverse}
+.msg.me .mbody{background:linear-gradient(135deg,var(--gold2),var(--gold));color:#1a1204;border-color:transparent;border-radius:15px 15px 5px 15px}
+.msg.me.grp .mbody{border-radius:15px}
+.msg.me .mtime{color:rgba(26,18,4,.62)}
+.msg.sys{display:block;align-self:center;background:none;border:0;color:var(--muted);font-size:11.5px;max-width:100%;text-align:center;margin:8px 0}
+.room-in{display:flex;align-items:flex-end;gap:8px;padding:10px 12px;border-top:1px solid var(--line)}
+.room-in textarea{flex:1;min-width:0;max-height:120px;resize:none;background:rgba(0,0,0,.4);border:1px solid var(--line);border-radius:16px;color:var(--txt);font:inherit;font-size:15px;line-height:1.4;padding:11px 14px;outline:0}
+.room-in textarea:focus{border-color:var(--gold)}
+.room-in button{flex:none;width:46px;height:46px;border-radius:50%;border:0;background:linear-gradient(135deg,var(--gold2),var(--gold));color:#1a1204;font-size:17px;font-weight:800;transition:transform .15s}
+.room-in button:active{transform:scale(.92)}
+.room-actions{display:flex;flex-wrap:wrap;gap:7px;padding:10px 14px calc(12px + env(safe-area-inset-bottom,0px));border-top:1px solid var(--line)}
+.room-code{flex:1 1 100%;text-align:center;font-size:11.5px;color:var(--muted);padding:0 0 3px;font-weight:600}
+.room-code b{color:var(--gold2);letter-spacing:1px}
+.room-actions button{flex:1 1 calc(50% - 7px);min-width:0;display:flex;align-items:center;justify-content:center;gap:6px;border-radius:11px;border:1px solid var(--line);background:var(--glass);color:var(--txt);font-size:12.5px;font-weight:600;padding:10px 8px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.room-actions button:hover{background:rgba(255,255,255,.12)}
 .room-actions button.main{background:linear-gradient(135deg,var(--gold2),var(--gold));color:#1a1204;border-color:transparent}
-.room-actions button.danger{color:#ff8b98;border-color:rgba(255,92,108,.35)}
+.room-actions button.danger{color:#ff8b98;border-color:rgba(255,92,108,.35);flex:1 1 100%}
 .chip.on{border-color:rgba(245,184,61,.55);background:rgba(245,184,61,.1)}
 .modal-bg{position:fixed;inset:0;z-index:340;background:rgba(0,0,0,.66);display:none;place-items:center;padding:20px}
 .modal-bg.show{display:grid}
@@ -321,9 +350,9 @@ footer b{font-family:var(--f-head);color:var(--txt)}
 .modal input:focus{border-color:var(--gold)}
 .modal .btn{width:100%;justify-content:center}
 @media(max-width:820px){
-  .room{top:auto;left:0;right:0;width:100%;max-height:84dvh;border-radius:24px 24px 0 0;border-left:0;border-top:1px solid var(--line);transform:translateY(102%)}
+  .room{top:auto;left:0;right:0;width:100%;max-height:90dvh;border-radius:24px 24px 0 0;border-left:0;border-top:1px solid var(--line);transform:translateY(102%)}
   .room-bg.show .room{transform:none}
-  .room-chat{max-height:36dvh}
+  .room-chat{max-height:44dvh;padding-bottom:10px}
 }
 .toast{opacity:0;visibility:hidden;pointer-events:none;transition:transform .3s,opacity .25s,visibility .3s}
 .toast.show{opacity:1;visibility:visible}
@@ -339,6 +368,12 @@ footer b{font-family:var(--f-head);color:var(--txt)}
 .me-btn:hover{border-color:var(--gold);transform:translateY(-1px)}
 .me-btn span{width:31px;height:31px;border-radius:50%;display:grid;place-items:center;font-weight:800;font-size:13.5px;color:#8a8794;background:rgba(255,255,255,.08)}
 .me-btn span.on{color:#160f02}
+.me-fab{display:none}
+.me-fab span{width:28px;height:28px;border-radius:50%;display:grid;place-items:center;font-weight:800;font-size:12px;color:#8a8794;background:rgba(255,255,255,.1)}
+.me-fab span.on{color:#160f02}
+@media(max-width:820px){
+  body.in-film .me-fab{display:grid;position:fixed;z-index:45;top:calc(var(--st) + 10px);right:12px;width:38px;height:38px;border-radius:50%;border:1px solid var(--line);background:rgba(0,0,0,.5);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);place-items:center;padding:0}
+}
 .cab-bg{position:fixed;inset:0;z-index:360;background:rgba(0,0,0,.66);-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);opacity:0;pointer-events:none;transition:opacity .25s;display:grid;place-items:center;padding:20px}
 .cab-bg.show{opacity:1;pointer-events:auto}
 .cab{width:min(520px,100%);max-height:88dvh;overflow:auto;background:#131320;border:1px solid var(--line);border-radius:24px;box-shadow:0 40px 100px rgba(0,0,0,.7);transform:translateY(14px) scale(.98);transition:transform .28s cubic-bezier(.2,.9,.2,1)}
@@ -404,6 +439,8 @@ footer b{font-family:var(--f-head);color:var(--txt)}
     </div>
   </div>
 </header>
+
+<button class="me-fab" id="filmMe" aria-label="Личный кабинет"><span id="filmAva">?</span></button>
 
 <main>
   <!-- HOME -->
@@ -509,6 +546,7 @@ footer b{font-family:var(--f-head);color:var(--txt)}
   <button data-tab="Сериал"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="12" rx="2"/><path d="M8 21h8M12 17v4"/></svg>Сериалы</button>
   <button data-tab="Мультфильм"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M8.5 14a4.5 4.5 0 0 0 7 0M9 9.5h.01M15 9.5h.01"/></svg>Мульты</button>
   <button data-tab="Аниме"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 3 2.6 5.6 6.1.7-4.5 4.2 1.2 6L12 16.5 6.6 19.5l1.2-6L3.3 9.3l6.1-.7z"/></svg>Аниме</button>
+  <button data-tab="me"><span class="tb-ava" id="tbAva">?</span>Профиль</button>
 </div>
 <div class="sheet-bg" id="sheetBg"><div class="sheet" id="sheet"><div class="grab"></div><h3 id="sheetTitle"></h3><div class="sheet-list" id="sheetList"></div></div></div>
 
@@ -522,7 +560,7 @@ footer b{font-family:var(--f-head);color:var(--txt)}
     <div class="room-members" id="roomMembers"></div>
     <div class="room-chat" id="roomChat"></div>
     <form class="room-in" id="roomForm" autocomplete="off">
-      <input id="roomMsg" placeholder="Сообщение…" maxlength="500">
+      <textarea id="roomMsg" rows="1" placeholder="Сообщение…" maxlength="500"></textarea>
       <button type="submit" aria-label="Отправить">➤</button>
     </form>
     <div class="room-actions" id="roomActions"></div>
@@ -1097,7 +1135,9 @@ function onViewChange(name){
 }
 function setTab(t){ document.querySelectorAll("#tabbar button").forEach(b => b.classList.toggle("on", b.dataset.tab === t)); }
 document.querySelectorAll("#tabbar button").forEach(b => b.onclick = () => {
-  const t = b.dataset.tab; setTab(t);
+  const t = b.dataset.tab;
+  if(t === "me"){ hap(); if(typeof window.k88OpenCab === "function") window.k88OpenCab(); return; }
+  setTab(t);
   if(t === "home") return goHome();
   if(t === "search"){ view("home"); window.scrollTo({top:0}); setTimeout(() => $("q").focus(), 50); return; }
   runSearch(t, t === "Сериал" ? "Сериалы" : t === "Мультфильм" ? "Мультфильмы" : t);
@@ -1303,24 +1343,23 @@ buildGenres(); loadHome(); updateHeader();
   let userHist = {}, userCreated = 0, userAttached = false;
 
   function paintMe(){
-    const s = el("meAva");
-    if(P.name){
-      s.textContent = initial(P.name);
-      s.style.background = avaColor(P.uid);
-      s.style.color = "#160f02";
-      s.classList.add("on");
-    }else{
-      s.textContent = "?";
-      s.style.background = "";
-      s.classList.remove("on");
-    }
+    const inn = P.name ? initial(P.name) : "?";
+    const bg = P.name ? avaColor(P.uid) : "";
+    ["meAva","filmAva","tbAva"].forEach(id => {
+      const s = el(id); if(!s) return;
+      s.textContent = inn;
+      s.style.background = bg;
+      s.classList.toggle("on", !!P.name);
+    });
   }
 
   function openCab(){ renderCab(); paintMe(); el("cabBg").classList.add("show"); }
   function closeCab(){ el("cabBg").classList.remove("show"); }
+  window.k88OpenCab = openCab;
   el("cabBg").addEventListener("click", e => { if(e.target === el("cabBg")) closeCab(); });
   el("cabClose").onclick = closeCab;
-  el("meBtn").onclick = () => needName(openCab);
+  el("meBtn").onclick = () => { if(typeof hap === "function") hap(); openCab(); };
+  el("filmMe").onclick = () => { if(typeof hap === "function") hap(); openCab(); };
   el("cabHome").onclick = () => { closeCab(); goHome(); };
   el("cabRename").onclick = () => {
     pendingName = null;
@@ -1443,7 +1482,15 @@ buildGenres(); loadHome(); updateHeader();
   el("roomBg").addEventListener("click", e => { if(e.target === el("roomBg")) closeDrawer(); });
   el("roomOpenBtn").onclick = () => needName(openDrawer);
   el("cRoom").onclick = () => { if(typeof hap === "function") hap(); needName(openDrawer); };
-  el("roomForm").addEventListener("submit", e => { e.preventDefault(); sendMsg(el("roomMsg").value); el("roomMsg").value = ""; });
+  const msgBox = el("roomMsg");
+  function growMsg(){ msgBox.style.height = "auto"; msgBox.style.height = Math.min(msgBox.scrollHeight, 120) + "px"; }
+  function resetMsg(){ msgBox.value = ""; msgBox.style.height = "auto"; }
+  function submitMsg(){ const v = msgBox.value; if(!v.trim()) return; sendMsg(v); resetMsg(); }
+  el("roomForm").addEventListener("submit", e => { e.preventDefault(); submitMsg(); });
+  msgBox.addEventListener("input", growMsg);
+  msgBox.addEventListener("keydown", e => {
+    if(e.key === "Enter" && !e.shiftKey && !e.isComposing){ e.preventDefault(); submitMsg(); }
+  });
 
   function paintChip(){
     const b = el("cRoomTxt");
@@ -1487,8 +1534,9 @@ buildGenres(); loadHome(); updateHeader();
     on(R("film"), "value", s => { const f = s.val(); if(f && f.url) openFilmShared(f.url); });
     on(R("play"), "value", s => { const d = s.val(); if(!d) return; lastPlay = d; applyPlay(d); });
 
-    el("roomChat").innerHTML = "";
+    el("roomChat").innerHTML = ""; lastMsgUid = null;
     on(R("messages").limitToLast(80), "child_added", s => addMsg(s.val()));
+    setTimeout(() => chatEmpty(true), 300);
 
     /* я хост и у меня уже открыт фильм, а в комнате его нет — публикую его в комнату */
     if(!(data.film && data.film.url) && canControl() && state.url){ bcFilm(); bc(); }
@@ -1512,7 +1560,7 @@ buildGenres(); loadHome(); updateHeader();
     attached = [];
     if(hbTimer){ clearInterval(hbTimer); hbTimer = null; }
     roomId = null; roomActive = false; members = {}; lastPlay = null; pending = null; unread = 0; filmOpenUrl = null;
-    el("roomChat").innerHTML = "";
+    el("roomChat").innerHTML = ""; lastMsgUid = null;
     closeDrawer(); paintChip(); renderMembers(); renderActions();
     if(!quiet) toast("Вы вышли из комнаты");
   }
@@ -1596,24 +1644,41 @@ buildGenres(); loadHome(); updateHeader();
   $("player").addEventListener("canplay", applyPending);
 
   /* ---------- чат и участники ---------- */
-  function bubble(cls, html){
-    const box = el("roomChat");
-    const d = document.createElement("div");
-    d.className = cls; d.innerHTML = html;
-    box.appendChild(d);
-    while(box.children.length > 200) box.removeChild(box.firstChild);
-    return d;
-  }
+  let lastMsgUid = null;
   function nearBottom(box){ return box.scrollHeight - box.scrollTop - box.clientHeight < 120; }
+  function fmtTime(ts){ return new Date(ts || now()).toLocaleTimeString("ru-RU", { hour: "2-digit", minute: "2-digit" }); }
+  function chatEmpty(show){
+    const box = el("roomChat"), ex = box.querySelector(".chat-empty");
+    if(show){ if(!ex && !box.querySelector(".msg:not(.sys)")) box.insertAdjacentHTML("beforeend", `<div class="chat-empty"><b>💬</b>Поздоровайтесь — сообщения увидят все в комнате.</div>`); }
+    else if(ex) ex.remove();
+  }
   function addMsg(m){
     if(!m) return;
     const box = el("roomChat"), mine = m.uid === P.uid, stick = nearBottom(box);
-    bubble("msg" + (mine ? " me" : ""),
-      (mine ? "" : `<span class="who">${esc(m.name || "Гость")}</span>`) + esc(m.text || ""));
+    chatEmpty(false);
+    const grp = lastMsgUid === m.uid; lastMsgUid = m.uid;
+    const d = document.createElement("div");
+    d.className = "msg" + (mine ? " me" : "") + (grp ? " grp" : "");
+    d.innerHTML =
+      (mine ? "" : `<span class="ava" style="background:${avaColor(m.uid)}">${esc(initial(m.name))}</span>`) +
+      `<div class="mbody">` +
+        (mine ? "" : `<span class="who">${esc(m.name || "Гость")}</span>`) +
+        `<span class="mtxt">${esc(m.text || "")}</span>` +
+        `<span class="mtime">${fmtTime(m.ts)}</span>` +
+      `</div>`;
+    box.appendChild(d);
+    while(box.children.length > 200) box.removeChild(box.firstChild);
     if(stick || mine) box.scrollTop = box.scrollHeight;
     if(!mine && !drawerOpen){ unread++; paintChip(); }
   }
-  function sysMsg(text){ bubble("msg sys", esc(text)); el("roomChat").scrollTop = 1e9; }
+  function sysMsg(text){
+    lastMsgUid = null;
+    const box = el("roomChat");
+    const d = document.createElement("div");
+    d.className = "msg sys"; d.textContent = text;
+    box.appendChild(d);
+    box.scrollTop = 1e9;
+  }
   function sendMsg(text){
     text = (text || "").trim();
     if(!text || !roomActive) return;
@@ -1647,17 +1712,17 @@ buildGenres(); loadHome(); updateHeader();
       return;
     }
     const info = document.createElement("div");
-    info.className = "muted-s"; info.style.textAlign = "center";
-    info.textContent = "Код комнаты: " + roomId + (canControl() ? " (вы хост)" : "");
+    info.className = "room-code";
+    info.innerHTML = "Код: <b>" + esc(roomId) + "</b>" + (canControl() ? " · вы хост 👑" : "");
     box.appendChild(info);
-    box.appendChild(mkBtn("🔗 Скопировать ссылку", "main", () => copyText(inviteUrl())));
-    if(canControl()) box.appendChild(mkBtn(ctlMode === "all" ? "🎛 Управление: все" : "🎛 Управление: только хост", "", () => {
+    box.appendChild(mkBtn("🔗 Ссылка", "main", () => copyText(inviteUrl())));
+    if(canControl()) box.appendChild(mkBtn(ctlMode === "all" ? "🎛 Всем" : "🎛 Хост", "", () => {
       const v = ctlMode === "all" ? "host" : "all";
       R("ctl").set(v);
       toast(v === "all" ? "Управлять могут все" : "Управляет только хост");
     }));
-    box.appendChild(mkBtn(micOn ? "🎤 Голос включён" : "🎤 Включить голос", micOn ? "main" : "", vToggleMic));
-    box.appendChild(mkBtn("🚪 Выйти из комнаты", "danger", () => leaveRoom(false)));
+    box.appendChild(mkBtn(micOn ? "🎤 Голос вкл" : "🎤 Голос", micOn ? "main" : "", vToggleMic));
+    box.appendChild(mkBtn("🚪 Выйти", "danger", () => leaveRoom(false)));
   }
 
   /* ================= Голосовой чат (Mesh WebRTC, сигналинг через RTDB) ================= */
@@ -1888,6 +1953,12 @@ buildGenres(); loadHome(); updateHeader();
     needName(() => joinRoom(rid));
   })();
 })();
+</script>
+<script>
+/* PWA: устанавливаемое приложение + офлайн-фолбэк главной */
+if("serviceWorker" in navigator && location.protocol === "https:"){
+  window.addEventListener("load", () => { navigator.serviceWorker.register("/sw.js").catch(() => {}); });
+}
 </script>
 </body>
 </html>
