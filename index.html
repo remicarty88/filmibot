@@ -1,0 +1,1049 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#07070a">
+<title>Кино-88 — смотреть фильмы и сериалы онлайн</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Unbounded:wght@500;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#07070a; --bg2:#0d0d12; --card:#12121a; --glass:rgba(255,255,255,.055);
+  --line:rgba(255,255,255,.09); --txt:#f4f1ea; --muted:#9a97a3;
+  --gold:#f5b83d; --gold2:#ffd77a; --red:#e5384b; --ok:#38d39f; --err:#ff5c6c;
+  --r:18px;
+  --f-head:"Unbounded","Inter",system-ui,sans-serif;
+  --f-body:"Inter",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--bg);color:var(--txt);font-family:var(--f-body);-webkit-font-smoothing:antialiased;min-height:100vh;overflow-x:hidden}
+body::before{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;
+  background:radial-gradient(900px 500px at 8% -8%,rgba(229,56,75,.16),transparent 60%),
+             radial-gradient(800px 500px at 100% 0,rgba(245,184,61,.11),transparent 55%)}
+a{color:inherit;text-decoration:none}
+button{font-family:inherit;cursor:pointer}
+.hidden{display:none!important}
+::-webkit-scrollbar{width:10px;height:10px}::-webkit-scrollbar-thumb{background:#2a2a36;border-radius:10px}::-webkit-scrollbar-track{background:transparent}
+
+/* ---------- header ---------- */
+header{position:fixed;top:0;left:0;right:0;z-index:60;transition:background .3s,backdrop-filter .3s,border-color .3s;border-bottom:1px solid transparent}
+header.solid{background:rgba(7,7,10,.78);backdrop-filter:blur(18px) saturate(1.4);-webkit-backdrop-filter:blur(18px) saturate(1.4);border-color:var(--line)}
+.head{max-width:1440px;margin:0 auto;padding:14px 32px;display:flex;align-items:center;gap:28px}
+.logo{display:flex;align-items:center;gap:2px;font-family:var(--f-head);font-weight:800;font-size:21px;letter-spacing:-.5px;cursor:pointer;white-space:nowrap}
+.logo em{font-style:normal;margin-left:6px;padding:3px 9px 4px;border-radius:9px;color:#1a1204;background:linear-gradient(135deg,var(--gold2),var(--gold));box-shadow:0 6px 22px rgba(245,184,61,.4)}
+nav{display:flex;gap:4px}
+nav button{background:none;border:0;color:var(--muted);font-size:14px;font-weight:500;padding:9px 14px;border-radius:10px;transition:.2s}
+nav button:hover,nav button.on{color:var(--txt);background:var(--glass)}
+.search{margin-left:auto;display:flex;align-items:center;gap:10px;width:min(380px,100%);background:var(--glass);border:1px solid var(--line);border-radius:14px;padding:0 6px 0 14px;transition:.25s}
+.search:focus-within{border-color:var(--gold);box-shadow:0 0 0 4px rgba(245,184,61,.12);background:rgba(255,255,255,.08)}
+.search svg{flex:none;opacity:.6}
+.search input{flex:1;min-width:0;background:none;border:0;outline:0;color:var(--txt);font-size:14.5px;padding:12px 0}
+.search input::placeholder{color:var(--muted)}
+.search button{border:0;border-radius:10px;padding:8px 14px;font-weight:600;font-size:13px;color:#1a1204;background:linear-gradient(135deg,var(--gold2),var(--gold))}
+
+/* ---------- hero ---------- */
+.hero{position:relative;min-height:min(86vh,760px);display:flex;align-items:flex-end;overflow:hidden;padding:130px 32px 70px}
+.hero-bg{position:absolute;inset:-60px;background-size:cover;background-position:center 20%;filter:blur(38px) saturate(1.5) brightness(.55);transform:scale(1.15);transition:opacity .8s}
+.hero::after{content:"";position:absolute;inset:0;background:linear-gradient(0deg,var(--bg) 2%,transparent 55%),linear-gradient(90deg,rgba(7,7,10,.85),transparent 70%)}
+.hero-in{position:relative;z-index:2;max-width:1440px;width:100%;margin:0 auto;display:grid;grid-template-columns:1fr 300px;gap:60px;align-items:end}
+.kicker{display:inline-flex;align-items:center;gap:8px;font-size:12px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--gold);margin-bottom:18px}
+.kicker::before{content:"";width:28px;height:2px;background:var(--gold)}
+.hero h1{font-family:var(--f-head);font-weight:800;font-size:clamp(34px,5.4vw,76px);line-height:1.02;letter-spacing:-2px;margin:0 0 20px;max-width:900px;text-wrap:balance}
+.hero-meta{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:30px}
+.pill-m{font-size:13px;font-weight:600;padding:7px 14px;border-radius:999px;background:var(--glass);border:1px solid var(--line);backdrop-filter:blur(8px)}
+.pill-m.g{color:var(--gold2);border-color:rgba(245,184,61,.4);background:rgba(245,184,61,.1)}
+.btns{display:flex;gap:12px;flex-wrap:wrap}
+.btn{display:inline-flex;align-items:center;gap:10px;border:0;border-radius:14px;padding:15px 28px;font-size:15px;font-weight:700;transition:.2s}
+.btn.main{color:#1a1204;background:linear-gradient(135deg,var(--gold2),var(--gold));box-shadow:0 12px 34px rgba(245,184,61,.35)}
+.btn.main:hover{transform:translateY(-2px);box-shadow:0 18px 44px rgba(245,184,61,.5)}
+.btn.ghost{color:var(--txt);background:var(--glass);border:1px solid var(--line);backdrop-filter:blur(8px)}
+.btn.ghost:hover{background:rgba(255,255,255,.12)}
+.hero-poster{width:100%;aspect-ratio:2/3;border-radius:22px;object-fit:cover;box-shadow:0 40px 90px rgba(0,0,0,.7),0 0 0 1px var(--line);transform:rotate(3deg);transition:.5s;cursor:pointer;background:var(--card)}
+.hero-poster:hover{transform:rotate(0) scale(1.03)}
+
+/* ---------- genres ---------- */
+.genres{max-width:1440px;margin:-26px auto 6px;padding:0 32px;position:relative;z-index:5;display:flex;gap:10px;overflow-x:auto;scrollbar-width:none}
+.genres::-webkit-scrollbar{display:none}
+.g-chip{flex:none;border:1px solid var(--line);background:var(--glass);color:var(--txt);font-size:14px;font-weight:600;padding:11px 20px;border-radius:999px;backdrop-filter:blur(10px);transition:.2s}
+.g-chip:hover{background:linear-gradient(135deg,var(--gold2),var(--gold));color:#1a1204;border-color:transparent;transform:translateY(-2px)}
+
+/* ---------- rows ---------- */
+main{padding-bottom:80px}
+.wrap{max-width:1440px;margin:0 auto;padding:0 32px}
+.row{margin-top:44px}
+.row-h{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px}
+.row-h h2{margin:0;font-family:var(--f-head);font-size:22px;font-weight:700;letter-spacing:-.5px;display:flex;align-items:center;gap:12px}
+.row-h h2::before{content:"";width:5px;height:24px;border-radius:4px;background:linear-gradient(var(--gold2),var(--red))}
+.arrows{display:flex;gap:8px}
+.arrows button{width:40px;height:40px;border-radius:50%;border:1px solid var(--line);background:var(--glass);color:var(--txt);font-size:18px;transition:.2s}
+.arrows button:hover{background:var(--gold);color:#1a1204;border-color:transparent}
+.track{display:flex;gap:18px;overflow-x:auto;scroll-snap-type:x proximity;padding:8px 4px 22px;margin:0 -4px;scrollbar-width:none}
+.track::-webkit-scrollbar{display:none}
+.track .card{flex:none;width:196px;scroll-snap-align:start}
+
+.grid{display:grid;gap:28px 22px;grid-template-columns:repeat(auto-fill,minmax(190px,1fr))}
+.card{position:relative;cursor:pointer;border-radius:18px;transition:transform .35s cubic-bezier(.2,.8,.2,1)}
+.card:hover{transform:translateY(-9px);z-index:3}
+.poster-box{position:relative;aspect-ratio:2/3;border-radius:18px;overflow:hidden;background:linear-gradient(160deg,#17171f,#0e0e14);box-shadow:0 16px 36px rgba(0,0,0,.55),0 0 0 1px var(--line);transition:box-shadow .35s}
+.poster-box img{width:100%;height:100%;object-fit:cover;display:block;transition:transform .7s cubic-bezier(.2,.8,.2,1)}
+.card:hover .poster-box{box-shadow:0 28px 62px rgba(0,0,0,.72),0 0 0 1px rgba(245,184,61,.5)}
+.card:hover .poster-box img{transform:scale(1.07)}
+.poster-box::after{content:"";position:absolute;inset:0;z-index:1;background:linear-gradient(0deg,rgba(7,7,10,.86),rgba(7,7,10,.18) 45%,transparent 70%);opacity:0;transition:opacity .35s}
+.card:hover .poster-box::after{opacity:1}
+.play{position:absolute;left:50%;top:50%;z-index:2;width:60px;height:60px;margin:-30px 0 0 -30px;border-radius:50%;display:grid;place-items:center;background:linear-gradient(135deg,var(--gold2),var(--gold));color:#1a1204;font-size:21px;padding-left:4px;opacity:0;transform:scale(.55);transition:opacity .3s,transform .35s cubic-bezier(.2,.9,.3,1.5);box-shadow:0 12px 32px rgba(245,184,61,.55)}
+.card:hover .play{opacity:1;transform:scale(1)}
+.yr{position:absolute;top:10px;left:10px;z-index:2;font-size:11.5px;font-weight:700;letter-spacing:.3px;padding:5px 10px;border-radius:9px;background:rgba(8,8,12,.62);border:1px solid rgba(255,255,255,.14);backdrop-filter:blur(8px)}
+.card .t{margin-top:12px;font-size:14px;font-weight:600;line-height:1.34;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;transition:color .25s}
+.card:hover .t{color:var(--gold2)}
+.ph{display:grid;place-items:center;height:100%;font-size:40px;color:var(--muted)}
+
+.skel .poster-box{background:linear-gradient(100deg,#13131b 30%,#1c1c27 50%,#13131b 70%);background-size:300% 100%;animation:sh 1.4s infinite;box-shadow:none}
+.skel .poster-box::after{display:none}
+@keyframes sh{to{background-position:-100% 0}}
+
+.sec-title{display:flex;align-items:baseline;gap:14px;margin:120px 0 26px}
+.sec-title h2{font-family:var(--f-head);font-size:28px;margin:0;letter-spacing:-1px}
+.sec-title span{color:var(--muted);font-size:14px}
+.state{text-align:center;padding:90px 20px;color:var(--muted)}
+.state .big{font-size:54px;margin-bottom:14px}
+.state h3{color:var(--txt);font-family:var(--f-head);margin:0 0 8px}
+.spinner{width:38px;height:38px;border-radius:50%;margin:0 auto 16px;border:3px solid var(--line);border-top-color:var(--gold);animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* ---------- film page ---------- */
+.film-bg{position:fixed;inset:0;z-index:-1;background-size:cover;background-position:center;filter:blur(70px) saturate(1.6) brightness(.32);transform:scale(1.2)}
+.film-top{padding-top:100px}
+.back{display:inline-flex;align-items:center;gap:8px;background:var(--glass);border:1px solid var(--line);color:var(--txt);border-radius:12px;padding:10px 18px;font-size:14px;font-weight:600;margin-bottom:26px;backdrop-filter:blur(10px);transition:.2s}
+.back:hover{background:rgba(255,255,255,.12)}
+.film-head{display:grid;grid-template-columns:260px 1fr;gap:40px;align-items:start;margin-bottom:34px}
+.film-poster{width:100%;aspect-ratio:2/3;object-fit:cover;border-radius:20px;box-shadow:0 30px 70px rgba(0,0,0,.65),0 0 0 1px var(--line);background:var(--card)}
+.film-info h1{font-family:var(--f-head);font-size:clamp(28px,3.6vw,48px);line-height:1.08;letter-spacing:-1.5px;margin:6px 0 16px}
+.badges{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:20px}
+.film-desc{color:#cfccd6;font-size:15.5px;line-height:1.75;max-width:820px}
+.player-block{display:grid;grid-template-columns:1fr 310px;gap:22px;align-items:start}
+.video-shell{position:relative;background:#000;border-radius:22px;overflow:hidden;box-shadow:0 30px 80px rgba(0,0,0,.7),0 0 0 1px var(--line)}
+.video-shell video{width:100%;aspect-ratio:16/9;display:block;background:#000;border:0}
+.video-empty{aspect-ratio:16/9;display:grid;place-items:center;text-align:center;color:var(--muted)}
+.video-empty .big{font-size:46px;margin-bottom:10px}
+.panel{background:var(--glass);border:1px solid var(--line);border-radius:var(--r);padding:18px;backdrop-filter:blur(14px)}
+.panel+.panel{margin-top:14px}
+.panel label{display:flex;align-items:center;justify-content:space-between;font-size:11px;text-transform:uppercase;letter-spacing:1.4px;color:var(--muted);margin-bottom:12px;font-weight:700}
+.panel label b{color:var(--gold);letter-spacing:.5px}
+.select{width:100%;background:rgba(0,0,0,.4);border:1px solid var(--line);color:var(--txt);border-radius:12px;padding:12px;font-size:14px;outline:0}
+.pills{display:flex;gap:8px;flex-wrap:wrap}
+.pill{background:rgba(0,0,0,.35);border:1px solid var(--line);color:var(--muted);border-radius:10px;padding:9px 14px;font-size:13px;font-weight:600;transition:.2s}
+.pill:hover{color:var(--txt);border-color:rgba(245,184,61,.5)}
+.pill.active{background:linear-gradient(135deg,var(--gold2),var(--gold));border-color:transparent;color:#1a1204}
+.pill small{font-size:10px;font-weight:800;margin-left:5px;padding:2px 5px;border-radius:5px;background:var(--red);color:#fff;vertical-align:1px}
+.subs-list{display:flex;flex-direction:column;gap:6px;max-height:160px;overflow:auto}
+.sub-btn{text-align:left;background:rgba(0,0,0,.35);border:1px solid var(--line);color:var(--txt);border-radius:10px;padding:9px 12px;font-size:13px}
+.sub-btn:hover{border-color:var(--gold)}
+.muted-s{color:var(--muted);font-size:13px}
+.seasons-bar{display:flex;gap:8px;flex-wrap:wrap;margin:22px 0 14px}
+.ep-grid{display:grid;gap:10px;grid-template-columns:repeat(auto-fill,minmax(64px,1fr))}
+.ep{background:var(--glass);border:1px solid var(--line);border-radius:12px;padding:13px 6px;text-align:center;font-size:14px;font-weight:700;transition:.2s;cursor:pointer}
+.ep:hover{border-color:var(--gold);transform:translateY(-2px)}
+.ep.active{background:linear-gradient(135deg,var(--gold2),var(--gold));color:#1a1204;border-color:transparent}
+
+.toast{position:fixed;bottom:26px;left:50%;transform:translate(-50%,140%);background:rgba(20,20,28,.95);backdrop-filter:blur(14px);border:1px solid var(--line);border-radius:14px;padding:14px 22px;font-size:14px;max-width:90vw;box-shadow:0 20px 50px rgba(0,0,0,.6);transition:transform .3s;z-index:200}
+.toast.show{transform:translate(-50%,0)}.toast.err{border-color:rgba(255,92,108,.6)}.toast.ok{border-color:rgba(56,211,159,.5)}
+footer{border-top:1px solid var(--line);padding:34px 32px;text-align:center;color:var(--muted);font-size:13px}
+footer b{font-family:var(--f-head);color:var(--txt)}
+
+@media(max-width:1000px){
+  nav{display:none}
+  .hero-in{grid-template-columns:1fr}.hero-poster{display:none}
+  .player-block{grid-template-columns:1fr}
+  .film-head{grid-template-columns:150px 1fr;gap:20px}
+}
+@media(max-width:640px){
+  .head{padding:12px 16px;gap:12px}.logo{font-size:17px}
+  .search button{display:none}
+  .hero{padding:110px 18px 50px;min-height:70vh}
+  .wrap,.genres{padding:0 16px}
+  .track .card{width:140px}.track{gap:12px}
+  .grid{grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:14px}
+  .arrows{display:none}.row-h h2{font-size:18px}
+  .film-head{grid-template-columns:1fr}.film-poster{max-width:200px}
+  .btn{padding:13px 22px}
+}
+
+/* ================= MOBILE / TELEGRAM MINI APP ================= */
+.tabbar,.ctrl{display:none}
+.sheet-bg{position:fixed;inset:0;z-index:300;background:rgba(0,0,0,.6);opacity:0;pointer-events:none;transition:opacity .25s}
+.sheet-bg.show{opacity:1;pointer-events:auto}
+.sheet{position:absolute;left:0;right:0;bottom:0;max-width:560px;margin:0 auto;background:#16161e;border-radius:24px 24px 0 0;padding:8px 10px calc(14px + env(safe-area-inset-bottom,0px));transform:translateY(100%);transition:transform .32s cubic-bezier(.2,.9,.2,1);max-height:80dvh;display:flex;flex-direction:column;box-shadow:0 -20px 60px rgba(0,0,0,.6)}
+.sheet-bg.show .sheet{transform:none}
+.grab{width:40px;height:5px;border-radius:3px;background:rgba(255,255,255,.22);margin:4px auto 6px;touch-action:none}
+.sheet h3{margin:0;padding:8px 14px 10px;font-size:17px;font-weight:700;touch-action:none}
+.sheet-list{overflow:auto;overscroll-behavior:contain}
+.opt{display:flex;align-items:center;gap:10px;width:100%;background:none;border:0;color:var(--txt);text-align:left;padding:15px 14px;border-radius:14px;font-size:16px;font-weight:500}
+.opt:active{background:var(--glass)}
+.opt small{font-size:10px;font-weight:800;padding:2px 6px;border-radius:6px;background:var(--red);color:#fff}
+.opt .chk{margin-left:auto;color:var(--gold);opacity:0;font-weight:800}
+.opt.on{color:var(--gold2)}.opt.on .chk{opacity:1}
+
+@media(max-width:820px){
+  :root{--st:calc(env(safe-area-inset-top,0px) + var(--tg-safe-area-inset-top,0px) + var(--tg-content-safe-area-inset-top,0px));--sb:env(safe-area-inset-bottom,0px)}
+  html,body{overscroll-behavior-y:none}
+  body{user-select:none;-webkit-user-select:none;-webkit-touch-callout:none;touch-action:manipulation}
+  input{user-select:text;-webkit-user-select:text}
+  nav,footer,.arrows{display:none!important}
+  main{padding-bottom:calc(96px + var(--sb))}
+  header{padding-top:var(--st)}
+  .head{padding:10px 14px;gap:10px}
+  .logo{font-size:0}.logo::before{content:"К";font-family:var(--f-head);font-size:17px;font-weight:800}
+  .logo em{font-size:17px;margin-left:2px;padding:3px 8px 4px}
+  .search{width:auto;flex:1;border-radius:14px;padding:0 12px}
+  .search input{font-size:16px;padding:11px 0}
+  /* hero: постер на весь экран, как в нативных приложениях */
+  .hero{min-height:0;height:min(72dvh,600px);padding:calc(var(--st) + 80px) 18px 26px}
+  .hero-bg{inset:0;transform:none;filter:brightness(.8) saturate(1.1);background-position:center top}
+  .hero::after{background:linear-gradient(0deg,var(--bg) 3%,rgba(7,7,10,.35) 45%,rgba(7,7,10,.55) 100%)}
+  .hero h1{font-size:29px;letter-spacing:-1px;margin-bottom:14px}
+  .hero-meta{margin-bottom:18px}
+  .btns{flex-wrap:nowrap}.btns .btn{flex:1;justify-content:center;padding:14px 12px;font-size:15px}
+  .genres{margin:-12px 0 0;padding:0 14px}
+  .g-chip{font-size:13px;padding:9px 16px}
+  .g-chip:hover{transform:none}
+  .row{margin-top:26px}.row-h h2{font-size:18px}
+  .track .card{width:136px}.track{gap:10px;padding-bottom:10px;scroll-snap-type:x mandatory;scroll-padding-left:14px}
+  .wrap{padding:0 14px}
+  .card:hover{transform:none}.card:active{transform:scale(.96)}
+  .card:hover .poster-box img{transform:none}
+  .play{display:none}
+  .poster-box{border-radius:14px;box-shadow:0 8px 20px rgba(0,0,0,.45);aspect-ratio:2/3}
+  .card .t{font-size:13px;margin-top:8px}
+  .grid{grid-template-columns:repeat(3,1fr);gap:18px 10px}
+  .sec-title{margin:calc(var(--st) + 84px) 0 18px}.sec-title h2{font-size:22px}
+  .state{padding:calc(var(--st) + 120px) 20px 60px}
+
+  /* tab bar */
+  .tabbar{display:flex;position:fixed;left:0;right:0;bottom:0;z-index:70;padding:6px 8px calc(6px + var(--sb));background:#0d0d12;border-top:1px solid var(--line);transform:translateZ(0)}
+  .tabbar button{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;background:none;border:0;color:var(--muted);font-size:10.5px;font-weight:600;padding:6px 0;transition:color .2s}
+  .tabbar button{outline:0;-webkit-appearance:none;appearance:none;box-shadow:none;background:none}
+  .tabbar button:focus,.tabbar button:active{outline:0;background:none}
+  .tabbar button svg{width:24px;height:24px;display:block;overflow:visible}
+  
+  .tabbar button.on{color:var(--gold)}
+  body.in-film .tabbar,body.in-film header{display:none}
+  .toast{bottom:calc(86px + var(--sb))}body.in-film .toast{bottom:calc(20px + var(--sb))}
+
+  /* страница фильма: плеер закреплён сверху */
+  .film-top{display:flex;flex-direction:column;padding-top:0}
+  .player-block,.player-block>div:first-child{display:contents}
+  .video-shell{order:1;position:sticky;top:var(--st);z-index:30;margin:0 -14px;border-radius:0;box-shadow:0 12px 30px rgba(0,0,0,.6)}
+  .ctrl{order:2;display:flex;gap:8px;overflow-x:auto;scrollbar-width:none;margin:14px -14px 4px;padding:0 14px}
+  .ctrl::-webkit-scrollbar{display:none}
+  .chip{flex:none;display:flex;flex-direction:column;align-items:flex-start;gap:2px;min-width:104px;max-width:190px;padding:9px 14px;border-radius:14px;border:1px solid var(--line);background:var(--glass);color:var(--txt);text-align:left;backdrop-filter:blur(10px)}
+  .chip span{font-size:11px;color:var(--muted);font-weight:600}
+  .chip b{font-size:15px;font-weight:700;max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:flex;gap:6px;align-items:center}
+  .chip b::after{content:"⌄";color:var(--gold);font-size:14px;margin-top:-4px}
+  .chip:active{background:rgba(255,255,255,.14)}
+  .film-head{order:3;grid-template-columns:96px 1fr;gap:14px;margin:18px 0 8px}
+  .film-poster{border-radius:12px}
+  .film-info h1{font-size:20px;letter-spacing:-.5px;margin:0 0 10px}
+  .badges{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;margin-bottom:0}.badges::-webkit-scrollbar{display:none}
+  .pill-m{flex:none;font-size:12px;padding:5px 11px}
+  .film-desc{grid-column:1/-1;font-size:14.5px;line-height:1.6;display:-webkit-box;-webkit-line-clamp:4;-webkit-box-orient:vertical;overflow:hidden}
+  .film-desc.open{-webkit-line-clamp:unset}
+  .film-head{display:grid}.film-info{display:contents}
+  .film-poster{grid-row:1}.badges,.film-info h1{grid-column:2}
+  .film-info h1{grid-row:1;align-self:end}.badges{grid-row:2;align-self:start}
+  #episodesBlock{order:4;margin-top:8px}
+  .player-block aside{display:none}
+  .seasons-bar{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;margin:12px -14px;padding:0 14px}.seasons-bar::-webkit-scrollbar{display:none}
+  .seasons-bar .pill{flex:none;padding:10px 16px;font-size:14px;border-radius:999px}
+  .ep-grid{grid-template-columns:repeat(5,1fr);gap:8px}
+  .ep{padding:15px 0;font-size:15px;border-radius:14px}.ep:hover{transform:none}.ep:active{transform:scale(.94)}
+  .back{position:fixed;top:calc(var(--st) + 10px);left:12px;z-index:40;width:38px;height:38px;padding:0;margin:0;border-radius:50%;justify-content:center;font-size:0;background:rgba(0,0,0,.45)}
+  .back::before{content:"‹";font-size:28px;line-height:1;margin-top:-3px}
+  body.tg .back{display:none}
+  .btn:hover{transform:none}
+}
+
+.epnav{display:none}
+@media(max-width:820px){
+  .back{display:none!important}
+  .back-chip{min-width:0;width:50px;align-items:center;justify-content:center;font-size:28px;line-height:1;padding:0 0 4px;color:var(--gold)}
+  body.tg .back-chip{display:none}
+  .film-poster{grid-row:1/span 2;width:96px}
+  .film-info h1{font-size:21px;line-height:1.15}
+  .film-desc{-webkit-line-clamp:3;position:relative}
+  .film-desc:not(.open)::after{content:"ещё";position:absolute;right:0;bottom:0;padding-left:36px;color:var(--gold);font-weight:600;background:linear-gradient(90deg,transparent,#0c0b10 55%)}
+  .epnav{display:flex;align-items:center;justify-content:space-between;padding:12px 14px;border-radius:16px;background:var(--glass);border:1px solid var(--line);margin-bottom:4px}
+  .epnav span{display:block;font-size:12px;color:var(--muted);font-weight:600}
+  .epnav b{font-size:17px}
+  .epbtns{display:flex;gap:8px}
+  .epbtns button{width:46px;height:46px;border-radius:50%;border:1px solid var(--line);background:rgba(255,255,255,.08);color:var(--gold);font-size:26px;line-height:1;padding:0 0 3px}
+  .epbtns button:active{background:var(--gold);color:#1a1204}
+  .epbtns button:disabled{opacity:.3}
+}
+.toast{opacity:0;visibility:hidden;pointer-events:none;transition:transform .3s,opacity .25s,visibility .3s}
+.toast.show{opacity:1;visibility:visible}
+@media(prefers-reduced-motion:reduce){*{transition-duration:.01ms!important;animation-duration:.01ms!important}}
+</style>
+</head>
+<body>
+
+<header id="hdr">
+  <div class="head">
+    <div class="logo" id="logo">КИНО<em>88</em></div>
+    <nav>
+      <button class="on" data-nav="home">Главная</button>
+      <button data-nav="genres">Жанры</button>
+      <button data-nav="Сериал">Сериалы</button>
+      <button data-nav="Мультфильм">Мультфильмы</button>
+      <button data-nav="Аниме">Аниме</button>
+    </nav>
+    <form class="search" id="searchForm" autocomplete="off">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+      <input id="q" type="text" placeholder="Фильмы, сериалы, аниме…">
+      <button type="submit">Найти</button>
+    </form>
+  </div>
+</header>
+
+<main>
+  <!-- HOME -->
+  <section id="home">
+    <div class="hero" id="hero">
+      <div class="hero-bg" id="heroBg"></div>
+      <div class="hero-in">
+        <div>
+          <div class="kicker">Сегодня в кино</div>
+          <h1 id="heroTitle">Кино-88</h1>
+          <div class="hero-meta" id="heroMeta"></div>
+          <div class="btns">
+            <button class="btn main" id="heroPlay"><svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M7 4.5v15l13-7.5z"/></svg>Смотреть</button>
+            <button class="btn ghost" id="heroNext">Другой фильм ↻</button>
+          </div>
+        </div>
+        <img class="hero-poster" id="heroPoster" alt="">
+      </div>
+    </div>
+
+    <div class="genres" id="genres"></div>
+    <div class="wrap" id="rows">
+      <div class="row skel"><div class="row-h"><h2>Загружаем кино…</h2></div>
+        <div class="track" id="skelTrack"></div></div>
+    </div>
+  </section>
+
+  <!-- SEARCH -->
+  <section id="results" class="hidden wrap">
+    <div class="sec-title"><h2 id="resTitle">Результаты</h2><span id="resCount"></span></div>
+    <div class="grid" id="resultsGrid"></div>
+  </section>
+
+  <section id="loading" class="state hidden"><div class="spinner"></div>Загружаем…</section>
+  <section id="error" class="state hidden"><div class="big">🎞</div><h3>Ничего не получилось</h3><div id="errorText"></div></section>
+
+  <!-- FILM -->
+  <section id="filmView" class="hidden">
+    <div class="film-bg" id="filmBg"></div>
+    <div class="wrap film-top">
+      <button class="back" id="backBtn">← Назад</button>
+      <div class="film-head">
+        <img class="film-poster" id="filmPoster" alt="">
+        <div class="film-info">
+          <div class="badges" id="filmBadges"></div>
+          <h1 id="filmTitle">—</h1>
+          <div class="film-desc" id="filmDesc"></div>
+        </div>
+      </div>
+
+      <div class="player-block">
+        <div>
+          <div class="video-shell">
+            <div class="video-empty" id="videoEmpty"><div><div class="big">🎬</div>Готовим плеер…</div></div>
+            <video id="player" class="hidden" controls playsinline webkit-playsinline></video>
+          </div>
+          <div class="ctrl" id="ctrlBar">
+            <button class="chip back-chip" id="cBack" aria-label="Назад">‹</button>
+            <button class="chip" data-sheet="quality"><span>Качество</span><b id="cQual">—</b></button>
+            <button class="chip" data-sheet="audio"><span>Озвучка</span><b id="cAudio">—</b></button>
+            <button class="chip" data-sheet="subs"><span>Субтитры</span><b id="cSubs">Выкл</b></button>
+            <button class="chip hidden" id="cPlayerChip" data-sheet="player"><span>Плеер</span><b id="cPlayer">—</b></button>
+          </div>
+          <div id="episodesBlock" class="hidden">
+            <div class="epnav"><div><span id="epNowS"></span><b id="epNowE"></b></div><div class="epbtns"><button id="epPrev" aria-label="Предыдущая серия">‹</button><button id="epNext" aria-label="Следующая серия">›</button></div></div>
+            <div class="seasons-bar" id="seasonsBar"></div>
+            <div class="ep-grid" id="epGrid"></div>
+          </div>
+        </div>
+        <aside>
+          <div class="panel" id="panelQuality">
+            <label>Качество <b id="qualBadge"></b></label>
+            <div class="pills" id="qualityPills"><span class="muted-s">—</span></div>
+          </div>
+          <div class="panel" id="panelTranslation">
+            <label>Озвучка</label>
+            <select class="select" id="translationSelect"></select>
+          </div>
+          <div class="panel hidden" id="panelPlayers">
+            <label>Плеер</label>
+            <div class="pills" id="playerPills"></div>
+          </div>
+          <div class="panel" id="panelSubs">
+            <label>Субтитры</label>
+            <div class="subs-list" id="subsList"><span class="muted-s">нет</span></div>
+          </div>
+        </aside>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer><b>КИНО-88</b> · смотрите любимое кино в хорошем качестве</footer>
+
+<div class="tabbar" id="tabbar">
+  <button class="on" data-tab="home"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11 12 4l9 7v8a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/></svg>Главная</button>
+  <button data-tab="search"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>Поиск</button>
+  <button data-tab="Сериал"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="12" rx="2"/><path d="M8 21h8M12 17v4"/></svg>Сериалы</button>
+  <button data-tab="Мультфильм"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M8.5 14a4.5 4.5 0 0 0 7 0M9 9.5h.01M15 9.5h.01"/></svg>Мульты</button>
+  <button data-tab="Аниме"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 3 2.6 5.6 6.1.7-4.5 4.2 1.2 6L12 16.5 6.6 19.5l1.2-6L3.3 9.3l6.1-.7z"/></svg>Аниме</button>
+</div>
+<div class="sheet-bg" id="sheetBg"><div class="sheet" id="sheet"><div class="grab"></div><h3 id="sheetTitle"></h3><div class="sheet-list" id="sheetList"></div></div></div>
+<div class="toast" id="toast"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/hls.js@1.5.17/dist/hls.min.js"></script>
+<script src="https://cdn.dashjs.org/v4.7.4/dash.all.min.js"></script>
+<script>
+const $ = id => document.getElementById(id);
+const SOURCE = "kinogo";
+const GENRES = ["Боевик","Комедия","Драма","Ужасы","Фантастика","Триллер","Мелодрама","Приключения","Детектив","Фэнтези","Мультфильм","Аниме","Сериал"];
+const state = { film:null, rows:[], featured:[], featIdx:0, lastView:"home", seasons:[], curSeason:null, curEp:null, mode:null };
+let hls = null, dash = null;
+const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+
+function toast(msg, kind){
+  const t = $("toast"); t.textContent = msg; t.className = "toast show " + (kind||"");
+  clearTimeout(t._t); t._t = setTimeout(()=>t.classList.remove("show"), 3400);
+}
+function view(name){
+  ["home","results","loading","error","filmView"].forEach(id => $(id).classList.toggle("hidden", id !== name));
+  if(name !== "filmView") $("filmBg").style.backgroundImage = "";
+  if(name !== "loading") state.lastView = name === "filmView" ? state.lastView : name;
+  window.scrollTo({top:0, behavior:"instant"});
+  updateHeader(); onViewChange(name);
+}
+function updateHeader(){ $("hdr").classList.toggle("solid", window.scrollY > 40 || $("home").classList.contains("hidden")); }
+window.addEventListener("scroll", updateHeader, {passive:true});
+
+/* ---------- карточки ---------- */
+/* Постеры источника — всего 200x280, поэтому прогоняем их через кэширующий
+   ресайз-CDN: на Retina картинки резкие, в WebP и весят меньше исходника.
+   IMG_CDN="" — выключить и брать картинки напрямую. */
+const IMG_CDN = "https://wsrv.nl/?url=";
+function poster(u, w, h){
+  if(!u) return u;
+  if(u.startsWith("//")) u = "https:" + u;
+  if(!IMG_CDN || !/^https?:/i.test(u)) return u;
+  return IMG_CDN + encodeURIComponent(u.replace(/^https?:\/\//i, "")) +
+         "&w=" + w + "&h=" + h + "&fit=cover&output=webp&q=88&sharp=1&sharpf=spline";
+}
+function cardEl(it){
+  const c = document.createElement("div");
+  c.className = "card";
+  const img = it.image
+    ? `<img src="${esc(poster(it.image, 400, 600))}" loading="lazy" decoding="async" alt=""
+            onerror="this.onerror=null;this.src='${esc(it.image)}'">`
+    : `<div class="ph">🎞</div>`;
+  c.innerHTML = `<div class="poster-box">${img}${it.year?`<span class="yr">${it.year}</span>`:""}<div class="play">▶</div></div>
+    <div class="t">${esc(it.title)}</div>`;
+  c.onclick = () => openFilm(it.url);
+  return c;
+}
+
+/* ---------- главная ---------- */
+function buildGenres(){
+  const box = $("genres");
+  GENRES.forEach(g => {
+    const b = document.createElement("button");
+    b.className = "g-chip"; b.textContent = g;
+    b.onclick = () => runSearch(g, g);
+    box.appendChild(b);
+  });
+}
+function skeleton(){
+  const t = $("skelTrack");
+  t.innerHTML = Array.from({length:9}, () => `<div class="card skel"><div class="poster-box"></div></div>`).join("");
+}
+async function loadHome(){
+  skeleton();
+  try{
+    const data = await fetch("/api/home").then(r => r.json());
+    if(!data.ok) throw new Error(data.error);
+    state.rows = data.rows || [];
+    renderRows();
+    state.featured = state.rows.flatMap(r => r.items).filter(i => i.image).slice(0, 12);
+    state.featIdx = Math.floor(Math.random() * Math.max(1, Math.min(6, state.featured.length)));
+    setHero();
+  }catch(e){
+    $("rows").innerHTML = `<div class="state"><div class="big">🎞</div><h3>Не удалось загрузить каталог</h3>${esc(e.message)}<br><br><button class="btn main" onclick="loadHome()">Повторить</button></div>`;
+  }
+}
+function renderRows(){
+  const box = $("rows"); box.innerHTML = "";
+  if(!state.rows.length){ box.innerHTML = `<div class="state"><div class="big">🍿</div><h3>Каталог пока пуст</h3>Воспользуйтесь поиском сверху.</div>`; return; }
+  state.rows.forEach((row, i) => {
+    const sec = document.createElement("div"); sec.className = "row"; sec.id = "row-" + i;
+    sec.innerHTML = `<div class="row-h"><h2>${esc(row.title)}</h2><div class="arrows"><button aria-label="Назад">‹</button><button aria-label="Вперёд">›</button></div></div><div class="track"></div>`;
+    const track = sec.querySelector(".track");
+    row.items.forEach(it => track.appendChild(cardEl(it)));
+    const [l, r] = sec.querySelectorAll(".arrows button");
+    l.onclick = () => track.scrollBy({left:-track.clientWidth * .85, behavior:"smooth"});
+    r.onclick = () => track.scrollBy({left: track.clientWidth * .85, behavior:"smooth"});
+    box.appendChild(sec);
+  });
+}
+function setHero(){
+  const it = state.featured[state.featIdx]; if(!it) return;
+  $("heroBg").style.backgroundImage = `url("${poster(it.image, 640, 960)}")`;
+  $("heroPoster").src = poster(it.image, 640, 960);
+  $("heroPoster").onerror = () => { $("heroPoster").onerror = null; $("heroPoster").src = it.image; };
+  $("heroTitle").textContent = it.title;
+  $("heroMeta").innerHTML = (it.year ? `<span class="pill-m g">${it.year}</span>` : "") + `<span class="pill-m">Смотреть онлайн</span><span class="pill-m">HD</span>`;
+  $("heroPlay").onclick = $("heroPoster").onclick = () => openFilm(it.url);
+}
+$("heroNext").onclick = () => { state.featIdx = (state.featIdx + 1) % state.featured.length; setHero(); };
+
+/* ---------- поиск ---------- */
+async function runSearch(q, title){
+  view("loading");
+  try{
+    const data = await fetch("/api/search?source="+SOURCE+"&q="+encodeURIComponent(q)).then(r => r.json());
+    if(!data.ok) throw new Error(data.error);
+    const list = data.results || [];
+    if(!list.length){ $("errorText").textContent = "По запросу «"+q+"» ничего не найдено."; view("error"); return; }
+    $("resTitle").textContent = title || ("«" + q + "»");
+    $("resCount").textContent = list.length + " найдено";
+    const g = $("resultsGrid"); g.innerHTML = "";
+    list.forEach(it => g.appendChild(cardEl({...it, title: it.title.replace(/\s*\(\d{4}\)\s*$/,"")})));
+    view("results");
+  }catch(err){ $("errorText").textContent = err.message; view("error"); }
+}
+$("searchForm").addEventListener("submit", e => { e.preventDefault(); const q = $("q").value.trim(); if(q) runSearch(q); });
+$("logo").onclick = goHome;
+function goHome(){ $("q").value = ""; view("home"); document.querySelectorAll("nav button").forEach(b => b.classList.toggle("on", b.dataset.nav === "home")); }
+document.querySelectorAll("nav button").forEach(b => b.onclick = () => {
+  const n = b.dataset.nav;
+  if(n === "home") return goHome();
+  if(n === "genres"){ view("home"); setTimeout(() => $("genres").scrollIntoView({behavior:"smooth", block:"center"}), 30); return; }
+  runSearch(n, n === "Сериал" ? "Сериалы" : n === "Мультфильм" ? "Мультфильмы" : n);
+});
+$("backBtn").onclick = () => { stopPlayer(); view(state.lastView === "results" ? "results" : "home"); };
+
+/* ---------- страница фильма ---------- */
+async function openFilm(url, season, episode){
+  const prev = state.lastView;
+  view("loading"); state.lastView = prev;
+  try{
+    const data = await fetch("/api/film?url="+encodeURIComponent(url)).then(r => r.json());
+    if(!data.ok) throw new Error(data.error);
+    state.film = data.film; state.url = url; renderFilm();
+    /* глубокая ссылка (из Telegram-бота): сразу открыть нужную серию */
+    if((season != null || episode != null) && state.film.isSeries && state.seasons.length){
+      const s = state.seasons.find(x => String(x.season) === String(season)) || state.seasons[0];
+      state.curSeason = s.season;
+      const e = s.episodes.find(x => String(x.episode) === String(episode)) || s.episodes[0];
+      state.curEp = e.episode;
+      renderSeasons(); renderEpisodes(); startPlayback();
+    }
+  }catch(err){ $("errorText").textContent = err.message; view("error"); }
+}
+function renderFilm(){
+  const f = state.film, img = f.thumbnailHQ || f.thumbnail || "";
+  $("filmPoster").src = poster(img, 560, 840);
+  $("filmPoster").onerror = () => { $("filmPoster").onerror = null; $("filmPoster").src = img; };
+  $("filmBg").style.backgroundImage = img ? `url("${poster(img, 480, 720)}")` : "";
+  const ym = (f.name||"").match(/\s*\((\d{4}(?:\s*[-–]\s*\d{4})?)\)\s*$/);
+  $("filmTitle").textContent = (f.name || "—").replace(/\s*\(\d{4}(?:\s*[-–]\s*\d{4})?\)\s*$/, "") || f.name;
+  const b = [];
+  const r = f.rating && f.rating.value;
+  if(r != null) b.push(`<span class="pill-m g">★ ${r}</span>`);
+  if(f.releaseYear) b.push(`<span class="pill-m">${f.releaseYear}</span>`); else if(ym) b.push(`<span class="pill-m">${ym[1]}</span>`);
+  b.push(`<span class="pill-m">${f.isSeries ? "Сериал" : "Фильм"}</span>`);
+  (f.categories || []).slice(0, 4).forEach(c => b.push(`<span class="pill-m">${esc(c)}</span>`));
+  $("filmBadges").innerHTML = b.join("");
+  $("filmDesc").textContent = f.description || "Описание отсутствует.";
+
+  state.seasons = f.seasons || [];
+  if(f.isSeries && state.seasons.length){
+    $("episodesBlock").classList.remove("hidden");
+    state.curSeason = state.seasons[0].season;
+    state.curEp = state.seasons[0].episodes[0].episode;
+    renderSeasons(); renderEpisodes();
+  }else{ $("episodesBlock").classList.add("hidden"); state.curEp = null; }
+
+  resetPlayer(); view("filmView"); state.lastView = state.lastView === "filmView" ? "home" : state.lastView;
+  restoreProgress();
+  startPlayback();
+}
+function renderSeasons(){
+  const bar = $("seasonsBar"); bar.innerHTML = "";
+  state.seasons.forEach(s => {
+    const b = document.createElement("button");
+    b.className = "pill" + (s.season === state.curSeason ? " active" : "");
+    b.textContent = s.season_text || ("Сезон " + s.season);
+    b.onclick = () => { state.curSeason = s.season; renderSeasons(); renderEpisodes(); };
+    bar.appendChild(b);
+  });
+}
+function renderEpisodes(){
+  const g = $("epGrid"); g.innerHTML = "";
+  const s = state.seasons.find(x => x.season === state.curSeason); if(!s) return;
+  s.episodes.forEach(e => {
+    const d = document.createElement("div");
+    d.className = "ep" + (e.episode === state.curEp ? " active" : "");
+    d.textContent = e.episode_text || e.episode;
+    d.onclick = () => { state.curEp = e.episode; renderEpisodes(); startPlayback(); };
+    g.appendChild(d);
+  });
+}
+
+/* ---------- плеер ---------- */
+function stopPlayer(){
+  if(hls){ try{ hls.destroy(); }catch(e){} hls = null; }
+  if(dash){ try{ dash.reset(); }catch(e){} dash = null; }
+  const v = $("player"); try{ v.pause(); }catch(e){} v.removeAttribute("src"); v.load();
+}
+function resetPlayer(){
+  stopPlayer(); state.mode = null;
+  $("player").classList.add("hidden");
+  $("videoEmpty").classList.remove("hidden");
+  $("panelPlayers").classList.add("hidden"); $("playerPills").innerHTML = "";
+  $("qualityPills").innerHTML = `<span class="muted-s">—</span>`; $("qualBadge").textContent = "";
+  $("subsList").innerHTML = `<span class="muted-s">нет</span>`;
+  $("translationSelect").innerHTML = "";
+  $("panelQuality").classList.remove("hidden"); $("panelTranslation").classList.remove("hidden"); $("panelSubs").classList.remove("hidden");
+}
+/* Источники текущего кадра: у сериала — выбранный эпизод, у фильма — прямые потоки. */
+function currentSources(){
+  const f = state.film;
+  if(!f) return [];
+  if(f.isSeries && state.seasons.length){
+    const s = state.seasons.find(x => x.season === state.curSeason);
+    const e = s && s.episodes.find(x => x.episode === state.curEp);
+    if(e && (e.dash || e.hls || e.mp4))
+      return [{ title: "Плеер 1", dash: e.dash, hls: e.hls, mp4: e.mp4, audio: e.audio || [], subtitles: e.subtitles || [] }];
+    return [];
+  }
+  return f.sources || [];
+}
+function startPlayback(){
+  const srcs = currentSources();
+  if(srcs.length && (srcs[0].dash || srcs[0].hls || srcs[0].mp4)){
+    state.mode = "hls";
+    renderHlsPlayers(srcs);
+    playHls(srcs[0], 0);
+  }else{
+    $("videoEmpty").innerHTML = `<div><div class="big">😔</div>Видео для этого фильма пока недоступно</div>`;
+    toast("Прямой поток не найден", "err");
+  }
+}
+function renderHlsPlayers(sources){
+  const box = $("playerPills"); box.innerHTML = "";
+  $("panelPlayers").classList.toggle("hidden", sources.length < 2);
+  sources.forEach((s, i) => {
+    const b = document.createElement("button");
+    b.className = "pill" + (i === 0 ? " active" : ""); b.textContent = s.title || ("Плеер " + (i+1));
+    b.onclick = () => { [...box.children].forEach(c => c.classList.remove("active")); b.classList.add("active"); playHls(s, i); };
+    box.appendChild(b);
+  });
+}
+
+/* ---------- качество ---------- */
+/* Номинальное «p». У широкоэкранных потоков кадр анаморфный (1920x800, 1272x530),
+   поэтому считаем по ширине (16:9-эквивалент), а не по высоте —
+   иначе источник отдаёт «800p» там, где реально Full HD. */
+const QUAL_RUNGS = [240, 360, 480, 720, 1080, 1440, 2160];
+function qualNum(w, h){
+  if(!w) return h || 0;
+  const eq = w * 9 / 16;
+  return QUAL_RUNGS.reduce((a, b) => Math.abs(b - eq) < Math.abs(a - eq) ? b : a);
+}
+
+/* ---------- качество: HLS ---------- */
+/* Выбор максимального качества. Уровни hls.js с одинаковой высотой (failover-дубли) схлопываются. */
+function bestLevelIndex(){
+  let best = -1, q = -1, bw = -1;
+  hls.levels.forEach((l, i) => {
+    const qq = qualNum(l.width, l.height);
+    if(qq > q || (qq === q && l.bitrate > bw)){ best = i; q = qq; bw = l.bitrate; }
+  });
+  return best;
+}
+function renderHlsLevels(){
+  const box = $("qualityPills"); box.innerHTML = "";
+  if(!hls || !hls.levels || !hls.levels.length){ box.innerHTML = `<span class="muted-s">авто</span>`; return; }
+  const seen = new Map();
+  hls.levels.forEach((l, i) => {
+    const key = l.height || Math.round(l.bitrate/1000);
+    if(!seen.has(key) || l.bitrate > hls.levels[seen.get(key)].bitrate) seen.set(key, i);
+  });
+  const items = [...seen.entries()].map(([k, i]) => {
+      const l = hls.levels[i], q = qualNum(l.width, l.height);
+      return { i, q, label: q ? q + "p" : k + "k" };
+    })
+    .sort((a, b) => b.q - a.q || b.i - a.i);
+  const auto = document.createElement("button");
+  auto.className = "pill"; auto.textContent = "Авто"; auto.dataset.level = "-1";
+  auto.onclick = () => { hls.currentLevel = -1; markLevel(); };
+  box.appendChild(auto);
+  items.forEach(({i, q, label}) => {
+    const b = document.createElement("button");
+    b.className = "pill"; b.dataset.level = i;
+    b.innerHTML = esc(label) + (q >= 1080 ? "<small>FHD</small>" : q >= 720 ? "<small>HD</small>" : "");
+    b.onclick = () => { hls.currentLevel = i; markLevel(); };
+    box.appendChild(b);
+  });
+  const max = Math.max(...items.map(x => x.q));
+  $("qualBadge").textContent = max ? "до " + max + "p" : "";
+  markLevel();
+}
+function markLevel(){
+  if(dash){ markDashLevel(); return; }
+  const cur = !hls ? -1 : (hls.autoLevelEnabled ? -1 : hls.currentLevel);
+  [...$("qualityPills").querySelectorAll(".pill")].forEach(p => {
+    const lv = +p.dataset.level;
+    const same = lv === cur || (cur >= 0 && hls.levels[lv] && hls.levels[cur] && hls.levels[lv].height === hls.levels[cur].height && lv >= 0);
+    p.classList.toggle("active", same);
+  });
+}
+
+/* ---------- качество: DASH ---------- */
+/* В dash.js v4 setQualityFor/getQualityFor работают с qualityIndex из getBitrateInfoListFor. */
+function dashLevels(){
+  if(!dash) return [];
+  try{ return dash.getBitrateInfoListFor("video") || []; }catch(e){ return []; }
+}
+function renderDashLevels(){
+  const box = $("qualityPills"); box.innerHTML = "";
+  const list = dashLevels();
+  if(!list.length){ box.innerHTML = `<span class="muted-s">—</span>`; return; }
+  const seen = new Map();
+  list.forEach(l => {
+    const h = l.height || 0, key = h || Math.round(l.bitrate/1000);
+    if(!seen.has(key) || l.bitrate > seen.get(key).bitrate) seen.set(key, l);
+  });
+  const items = [...seen.values()].map(l => {
+      const q = qualNum(l.width, l.height);
+      return { q: l.qualityIndex, n: q, label: q ? q + "p" : Math.round(l.bitrate/1000) + "k" };
+    })
+    .sort((a, b) => b.n - a.n || b.q - a.q);
+  const auto = document.createElement("button");
+  auto.className = "pill"; auto.dataset.level = "-1"; auto.textContent = "Авто";
+  auto.onclick = () => { setDashQuality(null); };
+  box.appendChild(auto);
+  items.forEach(({q, n, label}) => {
+    const b = document.createElement("button");
+    b.className = "pill"; b.dataset.level = q;
+    b.innerHTML = esc(label) + (n >= 1080 ? "<small>FHD</small>" : n >= 720 ? "<small>HD</small>" : "");
+    b.onclick = () => setDashQuality(q);
+    box.appendChild(b);
+  });
+  $("qualBadge").textContent = items.length ? "до " + items[0].n + "p" : "";
+  markDashLevel();
+}
+function setDashQuality(idx){
+  try{
+    dash.updateSettings({ streaming: { abr: { autoSwitchBitrate: { video: idx === null } } } });
+    if(idx !== null) dash.setQualityFor("video", idx);
+  }catch(e){}
+  markDashLevel();
+}
+function markDashLevel(){
+  if(!dash) return;
+  let auto = true, cur = 0;
+  try{ auto = dash.getSettings().streaming.abr.autoSwitchBitrate.video; cur = dash.getQualityFor("video"); }catch(e){}
+  [...$("qualityPills").querySelectorAll(".pill")].forEach(p => {
+    const lv = +p.dataset.level;
+    p.classList.toggle("active", auto ? lv === -1 : (lv === cur));
+  });
+}
+function dashAudioTracks(){
+  if(!dash) return [];
+  try{ return dash.getTracksFor("audio") || []; }catch(e){ return []; }
+}
+function setDashAudio(i){
+  const t = dashAudioTracks()[i];
+  if(t){ try{ dash.setCurrentTrack(t); }catch(e){} }
+}
+/* Киного нумерует дорожки как ru0/ru1/ru2, поэтому по языку их не различить
+   (все «ru»), а dash.js по умолчанию почему-то берёт последнюю — часто «Eng.Original».
+   Определяем русскую дорожку по названию источника и играем её сразу. */
+function pickAudioIndex(tracks, names){
+  let first = -1;
+  for(let i = 0; i < tracks.length; i++){
+    const t = tracks[i] || {};
+    const s = String((names || [])[i] || "") + " " + (t.lang || "") + " " + (t.name || "");
+    const s_l = s.toLowerCase();
+    const eng = /eng(lish)?|original/.test(s_l);
+    const rus = /\bru\d?\b|rus|рус/.test(s_l);
+    if(rus && !eng) return i;
+    if(!eng && first < 0) first = i;
+  }
+  return first < 0 ? 0 : first;
+}
+function playDash(source){
+  const video = $("player");
+  dash = dashjs.MediaPlayer().create();
+  dash.initialize(video, "/api/dash?url=" + encodeURIComponent(source.dash), true);
+  dash.on(dashjs.MediaPlayer.events.STREAM_INITIALIZED, () => {
+    renderDashLevels();
+    const names = source.audio || [];
+    const tr = dashAudioTracks();
+    if(tr.length){
+      const idx = pickAudioIndex(tr, names);
+      renderAudio(tr.map((t, i) => names[i] || t.lang || t.name || ("Дорожка " + (i+1))), idx);
+      setDashAudio(idx);                         // по умолчанию — русская дорожка
+    }
+    const list = dashLevels();
+    if(list.length){
+      const top = list.reduce((a, b) => {
+        const qa = qualNum(a.width, a.height), qb = qualNum(b.width, b.height);
+        return (qb > qa || (qb === qa && b.bitrate > a.bitrate)) ? b : a;
+      }, list[0]);
+      setDashQuality(top.qualityIndex);         // по умолчанию — максимальное качество
+    }
+    video.play().catch(() => {});
+  });
+  dash.on(dashjs.MediaPlayer.events.QUALITY_CHANGE_RENDERED, markDashLevel);
+  dash.on(dashjs.MediaPlayer.events.ERROR, (e) => {
+    if(e && e.error) toast("Ошибка потока: " + (e.error.code || e.error), "err");
+  });
+}
+
+function renderAudio(names, selIdx){
+  const sel = $("translationSelect"); sel.innerHTML = "";
+  if(!names || !names.length){ sel.innerHTML = `<option value="">Оригинальная дорожка</option>`; return; }
+  names.forEach((n, i) => { const o = document.createElement("option"); o.value = i; o.textContent = /^(default|und|)$/i.test(String(n).trim()) ? "Основная дорожка" : n; sel.appendChild(o); });
+  sel.value = String(selIdx || 0);
+}
+$("translationSelect").onchange = () => {
+  const i = parseInt($("translationSelect").value) || 0;
+  if(hls) hls.audioTrack = i; else if(dash) setDashAudio(i);
+};
+
+function playHls(source){
+  stopPlayer();
+  const video = $("player");
+  $("videoEmpty").classList.add("hidden"); video.classList.remove("hidden");
+  renderAudio(source.audio || []); renderSubs(source.subtitles || []);
+
+  // DASH отдаёт 1080p (в HLS у источника максимум 720p).
+  // MSE есть в десктопных браузерах и Android; в iOS Safari его нет,
+  // поэтому там DASH не запускаем и сразу идём в нативный HLS (потолок 720p).
+  if(source.dash && window.dashjs && typeof window.MediaSource !== "undefined"){
+    playDash(source);
+    return;
+  }
+
+  if(!source.hls && !source.mp4){
+    toast("Для этого браузера поток недоступен", "err");
+    $("videoEmpty").innerHTML = `<div><div class="big">😔</div>Поток не поддерживается этим браузером</div>`;
+    return;
+  }
+  const url = "/api/proxy?url=" + encodeURIComponent(source.hls || source.mp4);
+  if(source.hls && window.Hls && Hls.isSupported()){
+    hls = new Hls({ maxBufferLength: 40, enableWorker: true, capLevelToPlayerSize: false, startLevel: -1, abrEwmaDefaultEstimate: 12e6 });
+    hls.loadSource(url); hls.attachMedia(video);
+    hls.on(Hls.Events.MANIFEST_PARSED, () => {
+      renderHlsLevels();
+      const best = bestLevelIndex();
+      if(best >= 0) hls.currentLevel = best;        // по умолчанию — максимальное качество
+      if(hls.audioTracks && hls.audioTracks.length){
+        const names = source.audio || [];
+        const idx = pickAudioIndex(hls.audioTracks, names);
+        renderAudio(hls.audioTracks.map((t, i) => names[i] || t.name || t.lang || "Дорожка"), idx);
+        hls.audioTrack = idx;                      // по умолчанию — русская дорожка
+      }
+      markLevel();
+      video.play().catch(() => {});
+    });
+    hls.on(Hls.Events.LEVEL_SWITCHED, markLevel);
+    hls.on(Hls.Events.ERROR, (e, d) => {
+      if(!d.fatal) return;
+      if(d.type === Hls.ErrorTypes.NETWORK_ERROR) hls.startLoad();
+      else if(d.type === Hls.ErrorTypes.MEDIA_ERROR) hls.recoverMediaError();
+      else toast("Ошибка потока: " + d.details, "err");
+    });
+  }else{
+    $("qualityPills").innerHTML = `<span class="muted-s">авто</span>`;
+    video.src = url; video.load(); video.play().catch(() => {});
+  }
+}
+
+function renderSubs(list){
+  const box = $("subsList"); box.innerHTML = "";
+  if(!list.length){ box.innerHTML = `<span class="muted-s">нет</span>`; return; }
+  list.forEach(s => {
+    const b = document.createElement("button"); b.className = "sub-btn"; b.textContent = s.name;
+    b.onclick = () => attachSub(s.url, s.name); box.appendChild(b);
+  });
+  const off = document.createElement("button"); off.className = "sub-btn"; off.textContent = "Выключить";
+  off.onclick = () => { [...$("player").querySelectorAll("track")].forEach(t => t.remove()); toast("Субтитры выключены"); };
+  box.appendChild(off);
+}
+function attachSub(link, title){
+  const p = $("player"); [...p.querySelectorAll("track")].forEach(t => t.remove());
+  const t = document.createElement("track");
+  t.kind = "subtitles"; t.label = title; t.srclang = "ru"; t.default = true;
+  t.src = "/api/subtitle?url=" + encodeURIComponent(link);
+  p.appendChild(t); setTimeout(() => { t.track.mode = "showing"; }, 300);
+  toast("Субтитры: " + title, "ok");
+}
+
+/* ---------- init ---------- */
+
+/* ================= Telegram Mini App + нативные элементы ================= */
+const tg = window.Telegram && Telegram.WebApp, inTg = !!(tg && tg.initData);
+const hap = (k) => { try{ if(!tg||!tg.HapticFeedback) return; k==="s" ? tg.HapticFeedback.selectionChanged() : tg.HapticFeedback.impactOccurred("light"); }catch(e){} };
+if(inTg){
+  document.body.classList.add("tg");
+  try{ tg.ready(); tg.expand(); tg.disableVerticalSwipes && tg.disableVerticalSwipes();
+       tg.setHeaderColor("#07070a"); tg.setBackgroundColor("#07070a"); tg.setBottomBarColor && tg.setBottomBarColor("#0d0d12"); }catch(e){}
+  try{ tg.BackButton.onClick(() => { hap(); if(!$("filmView").classList.contains("hidden")) $("backBtn").click(); else goHome(); }); }catch(e){}
+}
+function onViewChange(name){
+  document.body.classList.toggle("in-film", name === "filmView");
+  if(name === "home") setTab("home");
+  if(inTg){ try{ name === "home" ? tg.BackButton.hide() : tg.BackButton.show(); }catch(e){} }
+}
+function setTab(t){ document.querySelectorAll("#tabbar button").forEach(b => b.classList.toggle("on", b.dataset.tab === t)); }
+document.querySelectorAll("#tabbar button").forEach(b => b.onclick = () => {
+  const t = b.dataset.tab; setTab(t);
+  if(t === "home") return goHome();
+  if(t === "search"){ view("home"); window.scrollTo({top:0}); setTimeout(() => $("q").focus(), 50); return; }
+  runSearch(t, t === "Сериал" ? "Сериалы" : t === "Мультфильм" ? "Мультфильмы" : t);
+});
+document.addEventListener("click", e => { if(e.target.closest(".pill,.ep,.g-chip,.tabbar button,.card,.chip,.opt,.btn")) hap(); }, true);
+
+/* ---- bottom sheet ---- */
+function closeSheet(){ $("sheetBg").classList.remove("show"); $("sheet").style.transform = ""; }
+function openSheet(title, rows){
+  if(!rows.length){ toast("Нет доступных вариантов"); return; }
+  $("sheetTitle").textContent = title;
+  const box = $("sheetList"); box.innerHTML = "";
+  rows.forEach(r => {
+    const b = document.createElement("button"); b.className = "opt" + (r.on ? " on" : "");
+    b.innerHTML = `<span>${esc(r.label)}</span>${r.badge ? `<small>${esc(r.badge)}</small>` : ""}<span class="chk">✓</span>`;
+    b.onclick = () => { hap("s"); r.pick(); closeSheet(); setTimeout(syncCtrl, 350); };
+    box.appendChild(b);
+  });
+  $("sheetBg").classList.add("show");
+}
+$("sheetBg").addEventListener("click", e => { if(e.target === $("sheetBg")) closeSheet(); });
+(function(){ // свайп вниз закрывает шторку
+  const sh = $("sheet"); let y0 = null, dy = 0;
+  sh.addEventListener("touchstart", e => { if(e.target.closest(".grab,h3")) y0 = e.touches[0].clientY; }, {passive:true});
+  sh.addEventListener("touchmove", e => { if(y0 === null) return; dy = Math.max(0, e.touches[0].clientY - y0); sh.style.transition = "none"; sh.style.transform = `translateY(${dy}px)`; }, {passive:true});
+  sh.addEventListener("touchend", () => { if(y0 === null) return; sh.style.transition = ""; dy > 90 ? closeSheet() : (sh.style.transform = ""); y0 = null; dy = 0; });
+})();
+
+/* ---- чипы под плеером: качество / озвучка / субтитры ---- */
+const pillTxt = p => p.childNodes[0] ? p.childNodes[0].textContent.trim() : p.textContent.trim();
+function sheetFor(kind){
+  if(kind === "quality"){
+    const ps = [...$("qualityPills").querySelectorAll(".pill")];
+    if(!ps.length) return toast("Качество подбирается автоматически");
+    openSheet("Качество", ps.map(p => ({ label: pillTxt(p), badge: (p.querySelector("small")||{}).textContent, on: p.classList.contains("active"), pick: () => p.click() })));
+  }else if(kind === "audio"){
+    const sel = $("translationSelect"), os = [...sel.options];
+    openSheet("Озвучка", os.map((o, i) => ({ label: o.textContent, on: sel.selectedIndex === i, pick: () => { sel.value = o.value; sel.onchange(); } })));
+  }else if(kind === "subs"){
+    const bs = [...$("subsList").querySelectorAll(".sub-btn")];
+    if(!bs.length) return toast("Для этого видео субтитров нет");
+    const cur = $("player").querySelector("track");
+    openSheet("Субтитры", bs.map(b => { const off = b.textContent === "Выключить";
+      return { label: b.textContent, on: off ? !cur : (cur && cur.label === b.textContent), pick: () => b.click() }; }));
+  }else if(kind === "player"){
+    const ps = [...$("playerPills").querySelectorAll(".pill")];
+    openSheet("Плеер", ps.map(p => ({ label: pillTxt(p), on: p.classList.contains("active"), pick: () => p.click() })));
+  }
+}
+document.querySelectorAll("#ctrlBar .chip").forEach(c => c.onclick = () => sheetFor(c.dataset.sheet));
+function syncCtrl(){
+  const act = $("qualityPills").querySelector(".pill.active"), any = $("qualityPills").querySelector(".pill");
+  $("cQual").textContent = act ? pillTxt(act) : (any ? "Авто" : "—");
+  const sel = $("translationSelect"); $("cAudio").textContent = (sel.options[sel.selectedIndex] || {}).textContent || "—";
+  const tr = $("player").querySelector("track"); $("cSubs").textContent = tr ? tr.label : "Выкл";
+  const ap = $("playerPills").querySelector(".pill.active");
+  $("cPlayerChip").classList.toggle("hidden", $("panelPlayers").classList.contains("hidden"));
+  if(ap) $("cPlayer").textContent = pillTxt(ap);
+}
+const mo = new MutationObserver(syncCtrl);
+["qualityPills","translationSelect","subsList","playerPills"].forEach(id => mo.observe($(id), {childList:true, subtree:true, attributes:true, attributeFilter:["class"]}));
+mo.observe($("player"), {childList:true});
+
+/* описание: тап раскрывает */
+$("filmDesc").onclick = e => e.currentTarget.classList.toggle("open");
+
+
+/* ---- серии: пред/след, запоминание места ---- */
+const allEps = () => state.seasons.flatMap(se => se.episodes.map(e => ({ s: se.season, e: e.episode })));
+function stepEp(d){
+  const l = allEps(), i = l.findIndex(x => x.s === state.curSeason && x.e === state.curEp), n = l[i + d];
+  if(!n) return false;
+  state.curSeason = n.s; state.curEp = n.e; renderSeasons(); renderEpisodes(); startPlayback(); return true;
+}
+$("epPrev").onclick = () => stepEp(-1); $("epNext").onclick = () => stepEp(1);
+function updateEpNav(){
+  if(!state.seasons.length || state.curEp == null) return;
+  const se = state.seasons.find(x => x.season === state.curSeason), ee = se && se.episodes.find(x => x.episode === state.curEp);
+  $("epNowS").textContent = se ? (se.season_text || "Сезон " + se.season) : "";
+  $("epNowE").textContent = ee ? (/^\d+$/.test(String(ee.episode_text || ee.episode)) ? "Серия " : "") + (ee.episode_text || ee.episode) : "";
+  const l = allEps(), i = l.findIndex(x => x.s === state.curSeason && x.e === state.curEp);
+  $("epPrev").disabled = i <= 0; $("epNext").disabled = i < 0 || i >= l.length - 1;
+  const a = $("epGrid").querySelector(".ep.active"); if(a && a.scrollIntoView) a.scrollIntoView({block:"nearest"});
+}
+new MutationObserver(updateEpNav).observe($("epGrid"), {childList:true});
+$("cBack").onclick = () => $("backBtn").click();
+
+const pkey = () => "k88:" + state.url;
+const fmtT = t => { t = Math.floor(t); const h = Math.floor(t/3600), m = Math.floor(t%3600/60), s = t%60; return (h ? h + ":" + String(m).padStart(2,"0") : m) + ":" + String(s).padStart(2,"0"); };
+function restoreProgress(){
+  state.resume = null;
+  try{
+    const r = JSON.parse(localStorage.getItem(pkey()) || "null"); if(!r) return;
+    if(state.film.isSeries && state.seasons.length){
+      if(!allEps().some(x => x.s === r.s && x.e === r.e)) return;
+      state.curSeason = r.s; state.curEp = r.e; renderSeasons(); renderEpisodes();
+    }
+    state.resume = r;
+  }catch(e){}
+}
+let lastSave = 0;
+$("player").addEventListener("timeupdate", () => {
+  const v = $("player"), now = Date.now();
+  if(!state.url || now - lastSave < 5000 || v.currentTime < 10) return; lastSave = now;
+  try{ localStorage.setItem(pkey(), JSON.stringify({ s: state.curSeason ?? null, e: state.curEp ?? null, t: Math.floor(v.currentTime) })); }catch(e){}
+});
+$("player").addEventListener("loadedmetadata", () => {
+  const v = $("player"), r = state.resume; state.resume = null;
+  if(r && (r.s ?? null) === (state.curSeason ?? null) && (r.e ?? null) === (state.curEp ?? null) && r.t > 10 && (!v.duration || r.t < v.duration - 30)){
+    try{ v.currentTime = r.t; toast("Продолжаем с " + fmtT(r.t), "ok"); }catch(e){}
+  }
+});
+/* автопереход на следующую серию */
+$("player").addEventListener("ended", () => {
+  if(state.film && state.film.isSeries){ if(stepEp(1)) toast("Следующая серия", "ok"); }
+  else if(state.url){ try{ localStorage.removeItem(pkey()); }catch(e){} }
+});
+
+buildGenres(); loadHome(); updateHeader();
+/* глубокая ссылка из Telegram-бота: /?u=<фильм>&s=<сезон>&e=<серия> */
+(() => {
+  const qp = new URLSearchParams(location.search);
+  const u = qp.get("u");
+  if(u) openFilm(u, qp.get("s"), qp.get("e"));
+})();
+</script>
+</body>
+</html>
