@@ -2,7 +2,7 @@
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <meta name="theme-color" content="#07070a">
 <meta name="color-scheme" content="dark">
 <meta name="description" content="Кино-88 — фильмы, сериалы и аниме онлайн. Смотреть вместе: комнаты, чат и голос.">
@@ -29,8 +29,9 @@
   --f-body:"Inter",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;
 }
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-html{scroll-behavior:smooth}
-body{margin:0;background:var(--bg);color:var(--txt);font-family:var(--f-body);-webkit-font-smoothing:antialiased;min-height:100vh;overflow-x:hidden}
+html{scroll-behavior:smooth;-webkit-text-size-adjust:100%;text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--txt);font-family:var(--f-body);-webkit-font-smoothing:antialiased;min-height:100vh;overflow-x:hidden;touch-action:manipulation}
+input,textarea,select{font-size:16px}
 body::before{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;
   background:radial-gradient(900px 500px at 8% -8%,rgba(229,56,75,.16),transparent 60%),
              radial-gradient(800px 500px at 100% 0,rgba(245,184,61,.11),transparent 55%)}
@@ -51,7 +52,7 @@ nav button:hover,nav button.on{color:var(--txt);background:var(--glass)}
 .search{margin-left:auto;display:flex;align-items:center;gap:10px;width:min(380px,100%);background:var(--glass);border:1px solid var(--line);border-radius:14px;padding:0 6px 0 14px;transition:.25s}
 .search:focus-within{border-color:var(--gold);box-shadow:0 0 0 4px rgba(245,184,61,.12);background:rgba(255,255,255,.08)}
 .search svg{flex:none;opacity:.6}
-.search input{flex:1;min-width:0;background:none;border:0;outline:0;color:var(--txt);font-size:14.5px;padding:12px 0}
+.search input{flex:1;min-width:0;background:none;border:0;outline:0;color:var(--txt);font-size:16px;padding:12px 0}
 .search input::placeholder{color:var(--muted)}
 .search button{border:0;border-radius:10px;padding:8px 14px;font-weight:600;font-size:13px;color:#1a1204;background:linear-gradient(135deg,var(--gold2),var(--gold))}
 
@@ -305,14 +306,14 @@ footer b{font-family:var(--f-head);color:var(--txt)}
 .room-t b{font-family:var(--f-head);font-size:16px;letter-spacing:-.3px}
 .room-t span{font-size:12px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .room-x{margin-left:auto;width:34px;height:34px;border-radius:50%;border:1px solid var(--line);background:var(--glass);color:var(--txt);font-size:14px}
-.room-members{display:flex;gap:6px;flex-wrap:wrap;padding:12px 16px;border-bottom:1px solid var(--line);min-height:42px;align-items:center}
+.room-members{display:flex;gap:6px;flex-wrap:wrap;padding:14px 16px;border-bottom:1px solid var(--line);min-height:60px;align-items:flex-start;align-content:flex-start;flex:1;overflow:auto}
 .mem{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:600;padding:5px 10px;border-radius:999px;background:var(--glass);border:1px solid var(--line);max-width:100%}
 .mem .ava{width:16px;height:16px;border-radius:50%;display:grid;place-items:center;font-size:9px;font-weight:800;color:#120c02;flex:none}
 .mem.host{border-color:rgba(245,184,61,.5);color:var(--gold2)}
+.mem i{font-style:normal;color:var(--muted);font-size:11px;font-weight:600}
 .room-chat{flex:1;overflow:auto;padding:14px 14px 8px;display:flex;flex-direction:column;gap:2px;overscroll-behavior:contain;scrollbar-width:thin}
 .room-chat::-webkit-scrollbar{width:6px}.room-chat::-webkit-scrollbar-thumb{background:rgba(255,255,255,.12);border-radius:3px}
 .chat-empty{margin:auto;text-align:center;color:var(--muted);font-size:13px;line-height:1.6;padding:18px 26px;max-width:280px}
-.chat-empty b{display:block;font-size:26px;margin-bottom:8px}
 .msg{display:flex;align-items:flex-end;gap:8px;max-width:100%}
 .msg:not(.grp){margin-top:8px}
 .msg .ava{width:26px;height:26px;border-radius:50%;display:grid;place-items:center;font-size:11px;font-weight:800;color:#120c02;flex:none;margin-bottom:1px}
@@ -328,18 +329,32 @@ footer b{font-family:var(--f-head);color:var(--txt)}
 .msg.me.grp .mbody{border-radius:15px}
 .msg.me .mtime{color:rgba(26,18,4,.62)}
 .msg.sys{display:block;align-self:center;background:none;border:0;color:var(--muted);font-size:11.5px;max-width:100%;text-align:center;margin:8px 0}
-.room-in{display:flex;align-items:flex-end;gap:8px;padding:10px 12px;border-top:1px solid var(--line)}
-.room-in textarea{flex:1;min-width:0;max-height:120px;resize:none;background:rgba(0,0,0,.4);border:1px solid var(--line);border-radius:16px;color:var(--txt);font:inherit;font-size:15px;line-height:1.4;padding:11px 14px;outline:0}
+.room-in{display:flex;align-items:flex-end;gap:8px;padding:8px 12px 10px;border-top:1px solid var(--line)}
+.room-in textarea{flex:1;min-width:0;max-height:120px;resize:none;background:rgba(0,0,0,.4);border:1px solid var(--line);border-radius:16px;color:var(--txt);font:inherit;font-size:16px;line-height:1.4;padding:11px 14px;outline:0}
 .room-in textarea:focus{border-color:var(--gold)}
-.room-in button{flex:none;width:46px;height:46px;border-radius:50%;border:0;background:linear-gradient(135deg,var(--gold2),var(--gold));color:#1a1204;font-size:17px;font-weight:800;transition:transform .15s}
+.room-in button{flex:none;width:46px;height:46px;border-radius:50%;border:0;background:linear-gradient(135deg,var(--gold2),var(--gold));color:#1a1204;display:grid;place-items:center;transition:transform .15s}
+.room-in button svg{width:20px;height:20px}
 .room-in button:active{transform:scale(.92)}
-.room-actions{display:flex;flex-wrap:wrap;gap:7px;padding:10px 14px calc(12px + env(safe-area-inset-bottom,0px));border-top:1px solid var(--line)}
-.room-code{flex:1 1 100%;text-align:center;font-size:11.5px;color:var(--muted);padding:0 0 3px;font-weight:600}
+.room-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:12px 14px calc(14px + env(safe-area-inset-bottom,0px));border-top:1px solid var(--line);align-content:start}
+.room-code{grid-column:1/-1;text-align:center;font-size:11.5px;color:var(--muted);padding:0 0 3px;font-weight:600}
 .room-code b{color:var(--gold2);letter-spacing:1px}
-.room-actions button{flex:1 1 calc(50% - 7px);min-width:0;display:flex;align-items:center;justify-content:center;gap:6px;border-radius:11px;border:1px solid var(--line);background:var(--glass);color:var(--txt);font-size:12.5px;font-weight:600;padding:10px 8px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.room-actions button{width:100%;min-width:0;display:flex;align-items:center;justify-content:center;gap:6px;border-radius:11px;border:1px solid var(--line);background:var(--glass);color:var(--txt);font-size:12.5px;font-weight:600;padding:11px 8px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .room-actions button:hover{background:rgba(255,255,255,.12)}
 .room-actions button.main{background:linear-gradient(135deg,var(--gold2),var(--gold));color:#1a1204;border-color:transparent}
-.room-actions button.danger{color:#ff8b98;border-color:rgba(255,92,108,.35);flex:1 1 100%}
+.room-actions button.danger{color:#ff8b98;border-color:rgba(255,92,108,.35);grid-column:1/-1}
+/* чат-док: всегда внизу экрана */
+.chatdock{display:none;position:fixed;left:0;right:0;bottom:calc(58px + var(--sb));z-index:60;flex-direction:column;background:rgba(12,12,17,.95);-webkit-backdrop-filter:blur(20px);backdrop-filter:blur(20px);border-top:1px solid var(--line);border-radius:16px 16px 0 0;box-shadow:0 -14px 40px rgba(0,0,0,.5)}
+body.has-room .chatdock{display:flex}
+body.in-film .chatdock{bottom:var(--sb)}
+body.panel-open .chatdock{display:none}
+.chatdock-head{display:flex;align-items:center;gap:8px;width:100%;background:none;border:0;color:var(--txt);padding:9px 14px 3px;font-size:12.5px;font-weight:700}
+.chatdock-dot{width:8px;height:8px;border-radius:50%;background:#3ddc84;flex:none;box-shadow:0 0 8px rgba(61,220,132,.8)}
+.chatdock-title{flex:1;text-align:left;color:var(--muted);letter-spacing:.3px}
+.chatdock-badge{min-width:18px;height:18px;padding:0 5px;border-radius:9px;background:var(--gold);color:#1a1204;font-size:11px;font-weight:800;display:grid;place-items:center}
+.chatdock-chev{width:18px;height:18px;color:var(--muted);transition:transform .25s}
+body.chat-open .chatdock-chev{transform:rotate(180deg)}
+.chatdock .room-chat{display:none;flex:0 1 auto;max-height:52dvh}
+body.chat-open .chatdock .room-chat{display:flex}
 .chip.on{border-color:rgba(245,184,61,.55);background:rgba(245,184,61,.1)}
 .modal-bg{position:fixed;inset:0;z-index:340;background:rgba(0,0,0,.66);display:none;place-items:center;padding:20px}
 .modal-bg.show{display:grid}
@@ -350,9 +365,15 @@ footer b{font-family:var(--f-head);color:var(--txt)}
 .modal input:focus{border-color:var(--gold)}
 .modal .btn{width:100%;justify-content:center}
 @media(max-width:820px){
-  .room{top:auto;left:0;right:0;width:100%;max-height:90dvh;border-radius:24px 24px 0 0;border-left:0;border-top:1px solid var(--line);transform:translateY(102%)}
+  .room{top:auto;left:0;right:0;width:100%;max-height:80dvh;border-radius:24px 24px 0 0;border-left:0;border-top:1px solid var(--line);transform:translateY(102%)}
   .room-bg.show .room{transform:none}
-  .room-chat{max-height:44dvh;padding-bottom:10px}
+  .toast{bottom:calc(150px + var(--sb))}
+  body.in-film .toast{bottom:calc(120px + var(--sb))}
+}
+@media(min-width:821px){
+  .chatdock{left:auto;right:18px;bottom:18px;width:360px;border-radius:16px;border:1px solid var(--line)}
+  body.in-film .chatdock{bottom:18px}
+  .chatdock .room-chat{max-height:44dvh}
 }
 .toast{opacity:0;visibility:hidden;pointer-events:none;transition:transform .3s,opacity .25s,visibility .3s}
 .toast.show{opacity:1;visibility:visible}
@@ -390,6 +411,18 @@ footer b{font-family:var(--f-head);color:var(--txt)}
 .stat{background:var(--glass);border:1px solid var(--line);border-radius:16px;padding:14px 8px;text-align:center}
 .stat b{display:block;font-family:var(--f-head);font-size:19px;letter-spacing:-.5px;color:var(--gold2);white-space:nowrap}
 .stat span{display:block;font-size:10.5px;color:var(--muted);margin-top:5px;font-weight:700;letter-spacing:.3px}
+.cab-rooms{display:flex;flex-direction:column;gap:9px;padding:0 22px 4px}
+.cab-room-new{display:flex;align-items:center;justify-content:center;gap:8px;border-radius:12px;border:0;background:linear-gradient(135deg,var(--gold2),var(--gold));color:#1a1204;font-size:14px;font-weight:700;padding:13px}
+.cab-room-new:active{transform:scale(.98)}
+.cab-join{display:flex;gap:8px}
+.cab-join input{flex:1;min-width:0;background:rgba(0,0,0,.4);border:1px solid var(--line);border-radius:12px;color:var(--txt);font-size:16px;padding:12px 13px;outline:0;text-transform:uppercase;letter-spacing:1px}
+.cab-join input:focus{border-color:var(--gold)}
+.cab-join input::placeholder{text-transform:none;letter-spacing:0}
+.cab-join button{flex:none;border-radius:12px;border:1px solid var(--line);background:var(--glass);color:var(--txt);font-size:14px;font-weight:600;padding:0 18px}
+.cab-room-now{display:flex;flex-direction:column;gap:8px}
+.cab-room-live{font-size:13px;color:var(--muted);font-weight:600}
+.cab-room-live b{color:var(--gold2);letter-spacing:1px}
+.cab-room-open{width:100%;border-radius:12px;border:1px solid var(--line);background:var(--glass);color:var(--txt);font-size:13.5px;font-weight:600;padding:11px}
 .cab-h{padding:22px 22px 10px;font-size:11px;text-transform:uppercase;letter-spacing:1.6px;color:var(--muted);font-weight:800}
 .cab-hist{display:flex;flex-direction:column;gap:6px;padding:0 14px}
 .hi{display:flex;align-items:center;gap:12px;padding:8px;border-radius:14px;border:1px solid transparent;cursor:pointer;transition:.2s}
@@ -502,7 +535,7 @@ footer b{font-family:var(--f-head);color:var(--txt)}
             <button class="chip" data-sheet="quality"><span>Качество</span><b id="cQual">—</b></button>
             <button class="chip" data-sheet="audio"><span>Озвучка</span><b id="cAudio">—</b></button>
             <button class="chip" data-sheet="subs"><span>Субтитры</span><b id="cSubs">Выкл</b></button>
-            <button class="chip" id="cRoom" aria-label="Смотреть вместе"><span>Вместе</span><b id="cRoomTxt">👥</b></button>
+            <button class="chip" id="cRoom" aria-label="Смотреть вместе"><span>Вместе</span><b id="cRoomTxt">включить</b></button>
             <button class="chip hidden" id="cPlayerChip" data-sheet="player"><span>Плеер</span><b id="cPlayer">—</b></button>
           </div>
           <div id="episodesBlock" class="hidden">
@@ -530,7 +563,7 @@ footer b{font-family:var(--f-head);color:var(--txt)}
           </div>
           <div class="panel" id="panelRoom">
             <label>Совместный просмотр</label>
-            <button class="btn ghost" id="roomOpenBtn" style="width:100%;justify-content:center;padding:13px 18px;font-size:14px">👥 Смотреть вместе</button>
+            <button class="btn ghost" id="roomOpenBtn" style="width:100%;justify-content:center;padding:13px 18px;font-size:14px">Смотреть вместе</button>
           </div>
         </aside>
       </div>
@@ -558,13 +591,23 @@ footer b{font-family:var(--f-head);color:var(--txt)}
       <button class="room-x" id="roomClose" aria-label="Закрыть">✕</button>
     </div>
     <div class="room-members" id="roomMembers"></div>
-    <div class="room-chat" id="roomChat"></div>
-    <form class="room-in" id="roomForm" autocomplete="off">
-      <textarea id="roomMsg" rows="1" placeholder="Сообщение…" maxlength="500"></textarea>
-      <button type="submit" aria-label="Отправить">➤</button>
-    </form>
     <div class="room-actions" id="roomActions"></div>
   </aside>
+</div>
+
+<!-- чат комнаты: всегда внизу экрана -->
+<div class="chatdock" id="chatDock">
+  <button class="chatdock-head" id="chatDockToggle" type="button">
+    <span class="chatdock-dot" id="chatDockDot"></span>
+    <span class="chatdock-title" id="chatDockTitle">Чат комнаты</span>
+    <span class="chatdock-badge" id="chatDockBadge" hidden></span>
+    <svg class="chatdock-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 15 6-6 6 6"/></svg>
+  </button>
+  <div class="room-chat" id="roomChat"></div>
+  <form class="room-in" id="roomForm" autocomplete="off">
+    <textarea id="roomMsg" rows="1" placeholder="Сообщение…" maxlength="500"></textarea>
+    <button type="submit" aria-label="Отправить"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12h15M13 6l6 6-6 6"/></svg></button>
+  </form>
 </div>
 
 <!-- профиль без авторизации -->
@@ -587,12 +630,21 @@ footer b{font-family:var(--f-head);color:var(--txt)}
       <button class="cab-x" id="cabClose" aria-label="Закрыть">✕</button>
     </div>
     <div class="cab-stats" id="cabStats"></div>
+    <div class="cab-h">Совместный просмотр</div>
+    <div class="cab-rooms">
+      <button class="cab-room-new" id="cabCreateRoom">Создать комнату</button>
+      <form class="cab-join" id="cabJoinForm" autocomplete="off">
+        <input id="cabCode" placeholder="Код комнаты" maxlength="12">
+        <button type="submit">Войти</button>
+      </form>
+      <div class="cab-room-now" id="cabRoomNow"></div>
+    </div>
     <div class="cab-h">История просмотров</div>
     <div class="cab-hist" id="cabHist"></div>
     <div class="cab-actions" id="cabActions">
-      <button class="main" id="cabHome">🎬 На главную</button>
-      <button id="cabRename">✏️ Сменить имя</button>
-      <button class="danger" id="cabClear">🗑 Очистить историю</button>
+      <button class="main" id="cabHome">На главную</button>
+      <button id="cabRename">Сменить имя</button>
+      <button class="danger" id="cabClear">Очистить историю</button>
     </div>
   </div>
 </div>
@@ -1374,13 +1426,53 @@ buildGenres(); loadHome(); updateHeader();
     renderCab(); toast("История очищена");
   };
 
+  /* ---------- комнаты из профиля ---------- */
+  el("cabCreateRoom").onclick = () => {
+    if(typeof hap === "function") hap();
+    needName(() => { closeCab(); createRoom(); });
+  };
+  el("cabJoinForm").addEventListener("submit", e => {
+    e.preventDefault();
+    const code = el("cabCode").value.trim().toUpperCase();
+    if(!code){ el("cabCode").focus(); return; }
+    el("cabCode").value = "";
+    needName(() => { closeCab(); joinRoom(code); });
+  });
+
+  const lastRoomId = () => { try{ return localStorage.getItem("k88:lastRoom") || ""; }catch(e){ return ""; } };
+  function paintCabRooms(){
+    const box = el("cabRoomNow"); if(!box) return;
+    box.innerHTML = "";
+    if(roomActive){
+      const d = document.createElement("div"); d.className = "cab-room-live";
+      d.innerHTML = "Вы в комнате <b>" + esc(roomId) + "</b>";
+      box.appendChild(d);
+      const b = document.createElement("button"); b.className = "cab-room-open";
+      b.textContent = "Открыть панель комнаты";
+      b.onclick = () => { if(typeof hap === "function") hap(); closeCab(); openDrawer(); };
+      box.appendChild(b);
+    } else {
+      const last = lastRoomId();
+      if(last){
+        const b = document.createElement("button"); b.className = "cab-room-open";
+        b.textContent = "Вернуться в комнату " + last;
+        b.onclick = () => { if(typeof hap === "function") hap(); needName(() => { closeCab(); joinRoom(last); }); };
+        box.appendChild(b);
+      }
+    }
+  }
+
   function renderCab(){
+    paintCabRooms();
     el("cabAva").textContent = initial(P.name || "?");
     el("cabAva").style.background = "linear-gradient(135deg," + avaColor(P.uid) + ",#e5384b)";
     el("cabName").textContent = P.name || "Гость";
     el("cabSince").textContent = userCreated
       ? "с нами с " + new Date(userCreated).toLocaleDateString("ru-RU", { day:"numeric", month:"long" })
       : "профиль без пароля";
+    const ren = el("cabRename");
+    ren.textContent = P.name ? "Сменить имя" : "Задать имя";
+    ren.classList.toggle("main", !P.name);
 
     const list = Object.keys(userHist).map(k => userHist[k]).filter(Boolean)
       .sort((a,b) => (b.ts || 0) - (a.ts || 0));
@@ -1476,12 +1568,20 @@ buildGenres(); loadHome(); updateHeader();
   paintMe();
 
   /* ---------- панель ---------- */
-  function openDrawer(){ drawerOpen = true; unread = 0; paintChip(); renderMembers(); renderActions(); el("roomBg").classList.add("show"); }
-  function closeDrawer(){ drawerOpen = false; el("roomBg").classList.remove("show"); }
+  function openDrawer(){ drawerOpen = true; unread = 0; paintChip(); renderMembers(); renderActions(); el("roomBg").classList.add("show"); document.body.classList.add("panel-open"); }
+  function closeDrawer(){ drawerOpen = false; el("roomBg").classList.remove("show"); document.body.classList.remove("panel-open"); }
   el("roomClose").onclick = closeDrawer;
   el("roomBg").addEventListener("click", e => { if(e.target === el("roomBg")) closeDrawer(); });
   el("roomOpenBtn").onclick = () => needName(openDrawer);
   el("cRoom").onclick = () => { if(typeof hap === "function") hap(); needName(openDrawer); };
+
+  /* ---------- чат-док внизу ---------- */
+  function setChatOpen(v){
+    document.body.classList.toggle("chat-open", !!v);
+    if(v){ unread = 0; paintChip(); const box = el("roomChat"); box.scrollTop = box.scrollHeight; }
+  }
+  el("chatDockToggle").onclick = () => setChatOpen(!document.body.classList.contains("chat-open"));
+  window.k88SetChatOpen = setChatOpen;
   const msgBox = el("roomMsg");
   function growMsg(){ msgBox.style.height = "auto"; msgBox.style.height = Math.min(msgBox.scrollHeight, 120) + "px"; }
   function resetMsg(){ msgBox.value = ""; msgBox.style.height = "auto"; }
@@ -1493,9 +1593,12 @@ buildGenres(); loadHome(); updateHeader();
   });
 
   function paintChip(){
-    const b = el("cRoomTxt");
-    b.textContent = (roomActive ? "👥 " + Math.max(1, Object.keys(members).length) : "👥") + (unread && !drawerOpen ? " •" : "");
+    const n = Math.max(1, Object.keys(members).length);
+    el("cRoomTxt").textContent = roomActive ? n + " чел." : "включить";
     el("cRoom").classList.toggle("on", roomActive);
+    const bd = el("chatDockBadge");
+    if(bd){ const show = unread > 0 && !document.body.classList.contains("chat-open"); bd.hidden = !show; if(show) bd.textContent = unread > 99 ? "99+" : String(unread); }
+    const t = el("chatDockTitle"); if(t) t.textContent = roomActive ? "Чат комнаты · " + n : "Чат комнаты";
   }
 
   /* ---------- комната ---------- */
@@ -1523,13 +1626,14 @@ buildGenres(); loadHome(); updateHeader();
 
     hostUid = data.host || null; ctlMode = data.ctl || "host";
     roomActive = true; unread = 0;
+    try{ localStorage.setItem("k88:lastRoom", rid); }catch(e){}
 
     const meRef = R("members/" + P.uid);
     meRef.set({ name: P.name, ts: now() });
     try{ meRef.onDisconnect().remove(); }catch(e){}
 
     const on = (ref, ev, cb) => { ref.on(ev, cb); attached.push(ref); };
-    on(R("members"), "value", s => { members = s.val() || {}; renderMembers(); paintChip(); });
+    on(R("members"), "value", s => { members = s.val() || {}; renderMembers(); paintChip(); vSync(); });
     on(R("ctl"), "value", s => { ctlMode = s.val() || "host"; renderActions(); });
     on(R("film"), "value", s => { const f = s.val(); if(f && f.url) openFilmShared(f.url); });
     on(R("play"), "value", s => { const d = s.val(); if(!d) return; lastPlay = d; applyPlay(d); });
@@ -1546,9 +1650,10 @@ buildGenres(); loadHome(); updateHeader();
     if(lastPlay) applyPlay(lastPlay);
     hbTimer = setInterval(heartbeat, 5000);
     vAttach();
+    document.body.classList.add("has-room");
     paintChip(); renderMembers(); renderActions();
     sysMsg(P.name + " в комнате");
-    openDrawer();
+    setChatOpen(true);
   }
 
   function leaveRoom(quiet){
@@ -1561,6 +1666,7 @@ buildGenres(); loadHome(); updateHeader();
     if(hbTimer){ clearInterval(hbTimer); hbTimer = null; }
     roomId = null; roomActive = false; members = {}; lastPlay = null; pending = null; unread = 0; filmOpenUrl = null;
     el("roomChat").innerHTML = ""; lastMsgUid = null;
+    document.body.classList.remove("has-room", "chat-open", "panel-open");
     closeDrawer(); paintChip(); renderMembers(); renderActions();
     if(!quiet) toast("Вы вышли из комнаты");
   }
@@ -1649,7 +1755,7 @@ buildGenres(); loadHome(); updateHeader();
   function fmtTime(ts){ return new Date(ts || now()).toLocaleTimeString("ru-RU", { hour: "2-digit", minute: "2-digit" }); }
   function chatEmpty(show){
     const box = el("roomChat"), ex = box.querySelector(".chat-empty");
-    if(show){ if(!ex && !box.querySelector(".msg:not(.sys)")) box.insertAdjacentHTML("beforeend", `<div class="chat-empty"><b>💬</b>Поздоровайтесь — сообщения увидят все в комнате.</div>`); }
+    if(show){ if(!ex && !box.querySelector(".msg:not(.sys)")) box.insertAdjacentHTML("beforeend", `<div class="chat-empty">Поздоровайтесь — сообщения увидят все в комнате.</div>`); }
     else if(ex) ex.remove();
   }
   function addMsg(m){
@@ -1669,7 +1775,7 @@ buildGenres(); loadHome(); updateHeader();
     box.appendChild(d);
     while(box.children.length > 200) box.removeChild(box.firstChild);
     if(stick || mine) box.scrollTop = box.scrollHeight;
-    if(!mine && !drawerOpen){ unread++; paintChip(); }
+    if(!mine && !document.body.classList.contains("chat-open")){ unread++; paintChip(); }
   }
   function sysMsg(text){
     lastMsgUid = null;
@@ -1693,7 +1799,7 @@ buildGenres(); loadHome(); updateHeader();
     ks.sort((a,b) => (members[b].ts||0) - (members[a].ts||0)).forEach(u => {
       const m = members[u] || {}, s = document.createElement("span");
       s.className = "mem" + (u === hostUid ? " host" : "");
-      s.innerHTML = `<span class="ava" style="background:${avaColor(u)}">${esc(initial(m.name))}</span>${esc(m.name || "Гость")}${u === hostUid ? " 👑" : ""}${(vState[u] && vState[u].mic) ? " 🎤" : ""}`;
+      s.innerHTML = `<span class="ava" style="background:${avaColor(u)}">${esc(initial(m.name))}</span>${esc(m.name || "Гость")}${u === P.uid ? ' <i>(вы)</i>' : ""}${u === hostUid ? " <i>хост</i>" : ""}${(vState[u] && vState[u].mic) ? " <i>голос</i>" : ""}`;
       box.appendChild(s);
     });
   }
@@ -1707,22 +1813,22 @@ buildGenres(); loadHome(); updateHeader();
     const box = el("roomActions"); box.innerHTML = "";
     el("roomSub").textContent = P.name ? "вы: " + P.name : "профиль не задан";
     if(!roomActive){
-      box.appendChild(mkBtn("👥 Создать комнату", "main", createRoom));
-      box.appendChild(mkBtn("🔑 Войти по коду", "", () => { const c = prompt("Код комнаты:"); if(c) joinRoom(c); }));
+      box.appendChild(mkBtn("Создать комнату", "main", createRoom));
+      box.appendChild(mkBtn("Войти по коду", "", () => { const c = prompt("Код комнаты:"); if(c) joinRoom(c); }));
       return;
     }
     const info = document.createElement("div");
     info.className = "room-code";
-    info.innerHTML = "Код: <b>" + esc(roomId) + "</b>" + (canControl() ? " · вы хост 👑" : "");
+    info.innerHTML = "Код: <b>" + esc(roomId) + "</b>" + (canControl() ? " · вы хост" : "");
     box.appendChild(info);
-    box.appendChild(mkBtn("🔗 Ссылка", "main", () => copyText(inviteUrl())));
-    if(canControl()) box.appendChild(mkBtn(ctlMode === "all" ? "🎛 Всем" : "🎛 Хост", "", () => {
+    box.appendChild(mkBtn("Ссылка", "main", () => copyText(inviteUrl())));
+    if(canControl()) box.appendChild(mkBtn(ctlMode === "all" ? "Всем" : "Только хост", "", () => {
       const v = ctlMode === "all" ? "host" : "all";
       R("ctl").set(v);
       toast(v === "all" ? "Управлять могут все" : "Управляет только хост");
     }));
-    box.appendChild(mkBtn(micOn ? "🎤 Голос вкл" : "🎤 Голос", micOn ? "main" : "", vToggleMic));
-    box.appendChild(mkBtn("🚪 Выйти", "danger", () => leaveRoom(false)));
+    box.appendChild(mkBtn(micOn ? "Микрофон вкл" : "Микрофон", micOn ? "main" : "", vToggleMic));
+    box.appendChild(mkBtn("Выйти", "danger", () => leaveRoom(false)));
   }
 
   /* ================= Голосовой чат (Mesh WebRTC, сигналинг через RTDB) ================= */
@@ -1784,24 +1890,25 @@ buildGenres(); loadHome(); updateHeader();
     try{ pc = new RTCPeerConnection(ICE_SERVERS); }
     catch(e){ toast("Голос: WebRTC недоступен", "err"); return null; }
 
-    const o = { other, pair, pc, initiator, cands: [], remoteSet: false, lastOfferTs: 0, refs: [], ready: false };
+    const o = { other, pair, pc, initiator, cands: [], remoteSet: false, lastOfferTs: 0, refs: [] };
     vPeers[other] = o;
 
-    if(localStream){
-      localStream.getTracks().forEach(t => pc.addTrack(t, localStream));
-    }else if(initiator){
-      /* без своего микрофона всё равно нужна аудио-линия, чтобы слышать других */
-      try{ pc.addTransceiver("audio", { direction: "recvonly" }); }catch(e){}
+    /* Аудио-линия создаётся заранее в обе стороны (sendrecv), даже без микрофона.
+       Тогда включение микрофона позже — это просто replaceTrack, без повторного
+       согласования (renegotiation), из-за которого связь часто и отваливалась. */
+    const localTrack = localStream && localStream.getAudioTracks()[0];
+    if(localTrack){ try{ pc.addTrack(localTrack, localStream); }catch(e){} }
+    if(!pc.getTransceivers().length){
+      try{ pc.addTransceiver("audio", { direction: "sendrecv" }); }catch(e){}
     }
 
     pc.onicecandidate = e => {
       if(e.candidate) R("pc/" + pair + "/c_" + P.uid).push({ cand: JSON.stringify(e.candidate) });
     };
     pc.ontrack = e => { const st = (e.streams && e.streams[0]) || new MediaStream([e.track]); vAudio(other, st); };
-    pc.onnegotiationneeded = () => { if(o.ready && pc.signalingState === "stable") vOffer(o); };
     pc.onconnectionstatechange = () => {
       const st = pc.connectionState;
-      if(st === "connected") toast("🎧 Голос подключён", "ok");
+      if(st === "connected") toast("Голос подключён", "ok");
       if(st === "failed"){
         try{ pc.restartIce(); }catch(e){}
         if(initiator) vOffer(o);                 // переинициируем соединение
@@ -1811,29 +1918,7 @@ buildGenres(); loadHome(); updateHeader();
 
     const listen = (ref, ev, cb) => { ref.on(ev, cb); o.refs.push(ref); };
 
-    if(initiator){
-      listen(R("pc/" + pair + "/answer"), "value", async s => {
-        const v = s.val();
-        if(!v || !v.sdp || pc.signalingState !== "have-local-offer") return;
-        try{ await pc.setRemoteDescription(v); o.remoteSet = true; o.ready = true; vFlush(o); }catch(e){}
-      });
-      vOffer(o);
-    } else {
-      listen(R("pc/" + pair + "/offer"), "value", async s => {
-        const v = s.val();
-        if(!v || !v.sdp || pc.signalingState !== "stable") return;
-        if(v.ts && v.ts <= o.lastOfferTs) return;
-        o.lastOfferTs = v.ts || 0;
-        try{
-          await pc.setRemoteDescription(v); o.remoteSet = true; vFlush(o);
-          const ans = await pc.createAnswer();
-          await pc.setLocalDescription(ans);
-          o.ready = true;
-          R("pc/" + pair + "/answer").set({ type: "answer", sdp: ans.sdp, from: P.uid, ts: now() });
-        }catch(e){}
-      });
-    }
-
+    /* удалённые ICE-кандидаты собеседника */
     listen(R("pc/" + pair + "/c_" + other), "child_added", s => {
       const v = s.val();
       if(!v || !v.cand) return;
@@ -1841,6 +1926,29 @@ buildGenres(); loadHome(); updateHeader();
       if(o.remoteSet) pc.addIceCandidate(c).catch(() => {});
       else o.cands.push(c);
     });
+
+    if(initiator){
+      listen(R("pc/" + pair + "/answer"), "value", async s => {
+        const v = s.val();
+        if(!v || !v.sdp || v.type !== "answer" || pc.signalingState !== "have-local-offer") return;
+        try{ await pc.setRemoteDescription(v); o.remoteSet = true; vFlush(o); }catch(e){}
+      });
+      vOffer(o);
+    } else {
+      listen(R("pc/" + pair + "/offer"), "value", async s => {
+        const v = s.val();
+        if(!v || !v.sdp) return;
+        if(v.ts && v.ts <= o.lastOfferTs) return;
+        o.lastOfferTs = v.ts || 0;
+        try{
+          if(pc.signalingState !== "stable"){ try{ await pc.setLocalDescription({ type: "rollback" }); }catch(e){} }
+          await pc.setRemoteDescription(v); o.remoteSet = true; vFlush(o);
+          const ans = await pc.createAnswer();
+          await pc.setLocalDescription(ans);
+          R("pc/" + pair + "/answer").set({ type: "answer", sdp: ans.sdp, from: P.uid, ts: now() });
+        }catch(e){}
+      });
+    }
 
     return o;
   }
@@ -1886,12 +1994,21 @@ buildGenres(); loadHome(); updateHeader();
   async function vToggleMic(){
     if(!roomActive){ toast("Сначала войдите в комнату"); return; }
     if(micOn) return vMicOff();
+    if(!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia){
+      toast("Микрофон требует https и разрешения браузера", "err"); return;
+    }
     try{
       localStream = await navigator.mediaDevices.getUserMedia({
         audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true },
         video: false
       });
-    }catch(e){ toast("Нет доступа к микрофону", "err"); return; }
+    }catch(e){
+      const n = e && e.name;
+      toast(n === "NotAllowedError" ? "Разрешите доступ к микрофону в браузере"
+          : n === "NotFoundError" || n === "OverconstrainedError" ? "Микрофон не найден"
+          : "Нет доступа к микрофону (нужен https)", "err");
+      return;
+    }
 
     micOn = true;
     vPublishLocal();
@@ -1901,20 +2018,24 @@ buildGenres(); loadHome(); updateHeader();
     try{ vr.onDisconnect().remove(); }catch(e){}
 
     vSync(); renderActions(); renderMembers();
-    toast("🎤 Микрофон включён", "ok");
+    toast("Микрофон включён", "ok");
   }
 
   /* отдаём свой звук всем уже установленным соединениям (без пересборки peer-ов) */
   function vPublishLocal(){
     if(!localStream) return;
+    const t = localStream.getAudioTracks()[0];
+    if(!t) return;
     Object.values(vPeers).forEach(o => {
       try{
-        localStream.getAudioTracks().forEach(t => {
-          if(o.pc.getSenders().some(s => s.track === t)) return;
-          const free = o.pc.getTransceivers().find(tr => !tr.sender.track && tr.direction !== "sendonly");
-          if(free){ free.direction = "sendrecv"; free.sender.replaceTrack(t); }
-          else o.pc.addTrack(t, localStream);
-        });
+        let tr = o.pc.getTransceivers().find(x => x.receiver && x.receiver.track && x.receiver.track.kind === "audio");
+        if(!tr) tr = o.pc.getTransceivers()[0];
+        if(tr){
+          if(tr.direction !== "sendrecv" && tr.direction !== "sendonly") tr.direction = "sendrecv";
+          if(tr.sender) tr.sender.replaceTrack(t);
+        }else{
+          o.pc.addTrack(t, localStream);
+        }
       }catch(e){}
     });
   }
