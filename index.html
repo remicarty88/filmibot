@@ -1932,10 +1932,26 @@ buildGenres(); loadHome(); updateHeader();
     try{ localStorage.setItem("k88:lastRoom", rid); }catch(e){}
 
     const meRef = R("members/" + P.uid);
-    meRef.set({ name: P.name, ts: now() });
-    try{ meRef.onDisconnect().remove(); }catch(e){}
-
     const on = (ref, ev, cb) => { ref.on(ev, cb); attached.push(ref); };
+
+    /* Присутствие: показ запроса доступа к микрофону, сворачивание вкладки или
+       блип сети рвут сокет RTDB — сервер выполняет onDisconnect и удаляет нас из
+       комнаты. Раньше мы объявляли себя один раз при входе, поэтому после обрыва
+       человек навсегда «пропадал» из комнаты. Теперь объявляемся заново при
+       каждом восстановлении связи и заодно возвращаем статус микрофона. */
+    const announce = () => {
+      if(!roomActive) return;
+      try{ meRef.onDisconnect().remove(); }catch(e){}
+      meRef.set({ name: P.name, ts: now() });
+      if(micOn){
+        const vr = R("voice/" + P.uid);
+        try{ vr.onDisconnect().remove(); }catch(e){}
+        vr.set({ mic: true, name: P.name, ts: now() });
+      }
+    };
+    announce();
+    on(db.ref(".info/connected"), "value", s => { if(s.val() === true) announce(); });
+
     on(R("members"), "value", s => { members = s.val() || {}; renderMembers(); paintChip(); vSync(); });
     on(R("ctl"), "value", s => { ctlMode = s.val() || "host"; renderActions(); });
     on(R("film"), "value", s => { const f = s.val(); if(f && f.url) openFilmShared(f.url); });
