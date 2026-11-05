@@ -65,6 +65,11 @@ PROXY_PASSWORD = "pyR6Nr5Wnm"
 PROXY_PORT = "50100"          # 50100 = HTTP(S), 50101 = SOCKS5
 
 
+def _proxy_for(gateway):
+    host = PROXY_GATEWAYS.get(gateway) or PROXY_GATEWAYS["prt"]
+    return f"http://{PROXY_LOGIN}:{PROXY_PASSWORD}@{host}:{PROXY_PORT}"
+
+
 def _pick_proxy():
     """Прокси для страниц сайта (на Railway датацентровый IP часто закрыт)."""
     raw = os.environ.get("HDREZKA_PROXY", "").strip()
@@ -72,9 +77,27 @@ def _pick_proxy():
         return ""
     if raw:
         return raw
-    gw = os.environ.get("PROXY_GATEWAY", "prt").strip().lower()
-    host = PROXY_GATEWAYS.get(gw) or PROXY_GATEWAYS["prt"]
-    return f"http://{PROXY_LOGIN}:{PROXY_PASSWORD}@{host}:{PROXY_PORT}"
+    return _proxy_for(os.environ.get("PROXY_GATEWAY", "prt").strip().lower())
+
+
+def _proxy_candidates():
+    """Шлюзы провайдера по порядку: один отвечает 429 — пробуем следующий.
+
+    Лимит одновременных соединений провайдер считает на конкретный вход, поэтому
+    когда первый шлюз перегружен, соседний часто ещё отвечает.
+    """
+    if not PROXY:
+        return []
+    if os.environ.get("HDREZKA_PROXY", "").strip():   # свой прокси — ротации нет
+        return [PROXY]
+    active = os.environ.get("PROXY_GATEWAY", "prt").strip().lower()
+    order = [active] + [g for g in PROXY_GATEWAYS if g != active]
+    out = []
+    for gw in order:
+        u = _proxy_for(gw)
+        if u not in out:
+            out.append(u)
+    return out
 
 
 PROXY = _pick_proxy()
@@ -842,9 +865,12 @@ def _hd_get(url, referer=None, timeout=30, use_proxy=True, headers=None):
 def _hd_post(url, data, referer=None, timeout=30):
     headers = {"Referer": referer or HDREZKA_ORIGIN}
     if _cffi is not None:
-        return _hd_session().post(url, data=data, headers=headers, timeout=timeout)
-    return _get_session().post(url, headers={**default_headers, **headers},
-                               timeout=timeout, proxies=make_proxy())
+        return _retry_get(lambda: _hd_session().post(url, data=data, headers=headers,
+                                                     timeout=timeout), attempts=3, delay=0.6)
+    return _retry_get(
+        lambda: _get_session().post(url, headers={**default_headers, **headers},
+                                    data=data, timeout=timeout, proxies=make_proxy()),
+        attempts=3, delay=0.6)
 
 
 def _hd_abs(src):
@@ -914,32 +940,56 @@ def hdrezka_browse(cat="films", genre=None, country=None, year=None, sort=None, 
     """
     path = HDREZKA_CATS.get(cat, "films/")
     list_url = HDREZKA_ORIGIN + path
-    headers = {"Referer": HDREZKA_ORIGIN}
-    if _cffi is not None:
-        sess = _cffi.Session(impersonate=HDREZKA_IMPERSONATE, proxies=make_proxy() or None)
-    else:
-        sess = _get_session()
-    try:
-        sess.get(list_url, headers=headers, timeout=30)
-        for field, value in (("defaultsort", sort), ("genre", genre),
-                             ("strana", country), ("year", year)):
-            if value:
-                sess.post(list_url,
-                          data={"xsort": 1, "xs_field": field, "xs_value": value},
-                          headers={"Referer": list_url, "X-Requested-With": "XMLHttpRequest"},
-                          timeout=30)
-        page = max(1, int(page or 1))
-        url = list_url if page == 1 else "%s%spage/%d/" % (HDREZKA_ORIGIN, path, page)
-        r = sess.get(url, headers=headers, timeout=30)
-    finally:
+    page = max(1, int(page or 1))
+    url = list_url if page == 1 else "%s%spage/%d/" % (HDREZKA_ORIGIN, path, page)
+
+    def _run(proxy_url, attempts):
+        headers = {"Referer": HDREZKA_ORIGIN}
+        pmap = {"http": proxy_url, "https": proxy_url} if proxy_url else None
         if _cffi is not None:
-            try:
-                sess.close()
-            except Exception:
-                pass
-    if r.status_code != 200:
-        raise RuntimeError("hdrezka вернула %s" % r.status_code)
-    return _hd_parse_cards(r.content)
+            sess = _cffi.Session(impersonate=HDREZKA_IMPERSONATE, proxies=pmap)
+            extra = {}
+        else:
+            sess = _get_session()
+            extra = {"proxies": pmap}
+        try:
+            # провайдер отвечает 429 при всплеске запросов — повторяем с паузой
+            _retry_get(lambda: sess.get(list_url, headers=headers, timeout=30, **extra),
+                       attempts=attempts, delay=0.6)
+            for field, value in (("defaultsort", sort), ("genre", genre),
+                                 ("strana", country), ("year", year)):
+                if value:
+                    _retry_get(lambda f=field, v=value: sess.post(
+                        list_url,
+                        data={"xsort": 1, "xs_field": f, "xs_value": v},
+                        headers={"Referer": list_url, "X-Requested-With": "XMLHttpRequest"},
+                        timeout=30, **extra), attempts=attempts, delay=0.6)
+            return _retry_get(lambda: sess.get(url, headers=headers, timeout=30, **extra),
+                              attempts=attempts, delay=0.6)
+        finally:
+            if _cffi is not None:
+                try:
+                    sess.close()
+                except Exception:
+                    pass
+
+    # Прокси-провайдер режет 429 на CONNECT — раньше каталог падал целиком.
+    # Перебираем шлюзы провайдера, в самом конце пробуем напрямую. По основному
+    # шлюзу повторяем настойчиво, остальные только пробуем.
+    candidates = list(_proxy_candidates())
+    if "" not in candidates:
+        candidates.append("")
+    last = None
+    for i, proxy_url in enumerate(candidates):
+        try:
+            r = _run(proxy_url, 3 if i == 0 else 1)
+        except Exception as e:
+            last = e
+            continue
+        if r is not None and r.status_code == 200:
+            return _hd_parse_cards(r.content)
+        last = RuntimeError("hdrezka вернула %s" % (r.status_code if r is not None else "?"))
+    raise last if last is not None else RuntimeError("hdrezka недоступна")
 
 
 def hdrezka_filters(cat="films"):
