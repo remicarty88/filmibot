@@ -449,6 +449,31 @@ EMBED_TRANSPORT = os.environ.get("EMBED_TRANSPORT", "auto").strip().lower()
 _embed_mode = {}
 _embed_lock = threading.Lock()
 
+# Заглушка hdrezka: для фильмов без своего источника во вкладке «Альтернатива»
+# стоит один и тот же embed, который играет чужой фильм (сейчас — 93196).
+# Такие embed-URL запоминаем и не берём: лучше «нет потока», чем чужое видео.
+_embed_owner_lock = threading.Lock()
+_embed_owner = {}                                   # embed-url -> фильм, что его принёс
+_generic_embeds = {"https://api.ortified.ws/embed/movie/93196"}
+
+
+def _drop_placeholder_players(players, film_url):
+    """Убирает общие embed-заглушки, которые hdrezka подсовывает вместо источника."""
+    keep = []
+    with _embed_owner_lock:
+        for p in players:
+            u = p.get("url")
+            if not u or u in _generic_embeds:
+                continue
+            owner = _embed_owner.get(u)
+            if owner is None or owner == film_url:
+                _embed_owner[u] = film_url
+                keep.append(p)
+            else:
+                # тот же embed отдали другому фильму — это общая заглушка
+                _generic_embeds.add(u)
+    return keep
+
 
 def fetch_embed(url, getter, timeout=30):
     """HTML страницы плеера. getter(url, use_proxy=<bool>, timeout=<int>) -> response."""
@@ -1224,6 +1249,7 @@ def hdrezka_film(url):
         vr = _hd_get(video_url, referer=url)
         if vr.status_code == 200:
             players = _hd_players_from_video_page(vr.text)
+            players = _drop_placeholder_players(players, url)
 
     # прямые потоки: фильм -> source:{...}, сериал -> seasons:[...]
     sources, seasons = [], []
