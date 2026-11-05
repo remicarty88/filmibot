@@ -794,6 +794,21 @@ const PREF = {
   setQual(v){ try{ localStorage.setItem("k88:prefQual", String(v)); }catch(e){} }
 };
 
+/* Локальный кэш данных (память + sessionStorage): повторное открытие фильма
+   или главной рисуется мгновенно, свежесть догоняется фоновым запросом. */
+const DCACHE = {
+  _mem: new Map(),
+  get(k){
+    if(this._mem.has(k)) return this._mem.get(k);
+    try{ const s = sessionStorage.getItem("k88:dc:" + k); if(s){ const v = JSON.parse(s); this._mem.set(k, v); return v; } }catch(e){}
+    return null;
+  },
+  set(k, v){
+    this._mem.set(k, v);
+    try{ const s = JSON.stringify(v); if(s.length < 300000) sessionStorage.setItem("k88:dc:" + k, s); }catch(e){}
+  }
+};
+
 function toast(msg, kind){
   const t = $("toast"); t.textContent = msg; t.className = "toast show " + (kind||"");
   clearTimeout(t._t); t._t = setTimeout(()=>t.classList.remove("show"), 3400);
@@ -850,7 +865,10 @@ const _prefetched = new Set();
 function prefetchFilm(url){
   if(!url || _prefetched.has(url)) return;
   _prefetched.add(url);
-  fetch("/api/film?url=" + encodeURIComponent(url)).catch(() => _prefetched.delete(url));
+  fetch("/api/film?url=" + encodeURIComponent(url))
+    .then(r => r.json())
+    .then(d => { if(d && d.ok && d.film) DCACHE.set("film:" + url, d.film); })
+    .catch(() => _prefetched.delete(url));
 }
 let _pfTimer = null;
 function cardEl(it){
@@ -887,19 +905,43 @@ function skeleton(){
   const t = $("skelTrack");
   t.innerHTML = Array.from({length:9}, () => `<div class="card skel"><div class="poster-box"></div></div>`).join("");
 }
+function applyHome(rows){
+  state.rows = rows || [];
+  renderRows();
+  state.featured = state.rows.flatMap(r => r.items).filter(i => i.image).slice(0, 12);
+  state.featIdx = Math.floor(Math.random() * Math.max(1, Math.min(6, state.featured.length)));
+  setHero();
+}
 async function loadHome(){
-  skeleton();
+  const cached = DCACHE.get("home");
+  if(cached && cached.length){ applyHome(cached); }
+  else { skeleton(); }
   try{
     const data = await fetch("/api/home").then(r => r.json());
     if(!data.ok) throw new Error(data.error);
-    state.rows = data.rows || [];
-    renderRows();
-    state.featured = state.rows.flatMap(r => r.items).filter(i => i.image).slice(0, 12);
-    state.featIdx = Math.floor(Math.random() * Math.max(1, Math.min(6, state.featured.length)));
-    setHero();
+    const rows = data.rows || [];
+    if(rows.length && JSON.stringify(rows) !== JSON.stringify(cached)) applyHome(rows);
+    if(rows.length){ DCACHE.set("home", rows); warmUp(rows); }
   }catch(e){
-    $("rows").innerHTML = `<div class="state"><div class="big">🎞</div><h3>Не удалось загрузить каталог</h3>${esc(e.message)}<br><br><button class="btn main" onclick="loadHome()">Повторить</button></div>`;
+    if(!(cached && cached.length)){
+      $("rows").innerHTML = `<div class="state"><div class="big">🎞</div><h3>Не удалось загрузить каталог</h3>${esc(e.message)}<br><br><button class="btn main" onclick="loadHome()">Повторить</button></div>`;
+    }
   }
+}
+/* фоновая «разогревка» первых карточек: к моменту тапа данные уже в кэше,
+   поэтому фильм открывается мгновенно (на мобильных hover-предзагрузки нет) */
+let _warmed = false;
+function warmUp(rows){
+  if(_warmed) return;
+  _warmed = true;
+  const urls = (rows || []).flatMap(r => r.items).slice(0, 6).map(i => i.url).filter(Boolean);
+  const run = () => {
+    let i = 0;
+    const step = () => { const u = urls[i++]; if(!u) return; prefetchFilm(u); if(i < urls.length) setTimeout(step, 500); };
+    step();
+  };
+  if("requestIdleCallback" in window) requestIdleCallback(run, {timeout: 2500});
+  else setTimeout(run, 1500);
 }
 function renderRows(){
   const box = $("rows"); box.innerHTML = "";
@@ -1189,23 +1231,41 @@ $("fmApply").onclick = () => {
 document.addEventListener("keydown", e => { if(e.key === "Escape") closeFilters(); });
 
 /* ---------- страница фильма ---------- */
+function hasPlayable(f){
+  return !!(f && (f.sources || []).some(s => s && (s.hls || s.mp4 || s.dash)));
+}
+function presentFilm(url, film, season, episode){
+  state.film = film; state.url = url; renderFilm();
+  if(window.k88Viewed){ try{ window.k88Viewed(url); }catch(e){} }
+  /* глубокая ссылка (из Telegram-бота): сразу открыть нужную серию */
+  if((season != null || episode != null) && film.isSeries && state.seasons.length){
+    const s = state.seasons.find(x => String(x.season) === String(season)) || state.seasons[0];
+    state.curSeason = s.season;
+    const e = s.episodes.find(x => String(x.episode) === String(episode)) || s.episodes[0];
+    state.curEp = e.episode;
+    renderSeasons(); renderEpisodes(); startPlayback();
+  }
+}
+let _openSeq = 0;
 async function openFilm(url, season, episode){
+  const seq = ++_openSeq;
   const prev = state.lastView;
-  view("loading"); state.lastView = prev;
+  const cached = DCACHE.get("film:" + url);
+  if(cached){ presentFilm(url, cached, season, episode); }         // мгновенно из кэша
+  else { view("loading"); state.lastView = prev; }
   try{
     const data = await fetch("/api/film?url="+encodeURIComponent(url)).then(r => r.json());
+    if(seq !== _openSeq) return;                                   // пользователь уже ушёл
     if(!data.ok) throw new Error(data.error);
-    state.film = data.film; state.url = url; renderFilm();
-    if(window.k88Viewed){ try{ window.k88Viewed(url); }catch(e){} }
-    /* глубокая ссылка (из Telegram-бота): сразу открыть нужную серию */
-    if((season != null || episode != null) && state.film.isSeries && state.seasons.length){
-      const s = state.seasons.find(x => String(x.season) === String(season)) || state.seasons[0];
-      state.curSeason = s.season;
-      const e = s.episodes.find(x => String(x.episode) === String(episode)) || s.episodes[0];
-      state.curEp = e.episode;
-      renderSeasons(); renderEpisodes(); startPlayback();
+    DCACHE.set("film:" + url, data.film);
+    /* доприменяем только если ещё ничего не показали или у кэша не было потока */
+    if(!cached || (!hasPlayable(cached) && hasPlayable(data.film) && state.mode === null)){
+      presentFilm(url, data.film, season, episode);
     }
-  }catch(err){ $("errorText").textContent = err.message; view("error"); }
+  }catch(err){
+    if(seq !== _openSeq) return;
+    if(!cached){ $("errorText").textContent = err.message; view("error"); }
+  }
 }
 function renderFilm(){
   const f = state.film, img = f.thumbnailHQ || f.thumbnail || "";

@@ -76,8 +76,8 @@ def _pick_proxy():
 
 
 PROXY = _pick_proxy()
-# На Railway датацентровый IP не отдаёт видео напрямую, поэтому по умолчанию
-# видео тоже идёт через прокси (VIDEO_PROXY=off/direct — пустить напрямую).
+# На Railway датацентровый IP часто не отдаёт видео напрямую, поэтому прокси
+# можно задать явно (VIDEO_PROXY=off/direct — пустить напрямую).
 _video_raw = os.environ.get("VIDEO_PROXY", "").strip()
 if _video_raw.lower() in ("off", "none", "direct"):
     VIDEO_PROXY = ""
@@ -85,6 +85,12 @@ elif _video_raw:
     VIDEO_PROXY = _video_raw
 else:
     VIDEO_PROXY = PROXY
+
+# Транспорт видео:
+#   auto (по умолчанию) — сначала пробуем напрямую (вне датацентра это в разы
+#     быстрее), при блокировке CDN автоматически переходим на прокси;
+#   on  — всегда напрямую;  off — всегда через прокси.
+VIDEO_DIRECT = (os.environ.get("VIDEO_DIRECT", "auto").strip().lower() or "auto")
 
 app = Flask(__name__, static_folder=None)
 
@@ -137,6 +143,13 @@ _video_local = threading.local()
 _transport_memo = {}
 _transport_lock = threading.Lock()
 
+# Нужен ли прокси для конкретного потока: None — неизвестно, True/False — установлено.
+# В режиме auto прямой доступ пробуем первым, а при блокировке CDN запоминаем это,
+# чтобы не делать холостую попытку на каждый следующий сегмент.
+_video_proxy_memo = {}
+_video_proxy_lock = threading.Lock()
+_direct_state = {"strikes": 0, "off_until": 0.0}
+
 
 def _stream_root(url):
     m = re.match(r"^(.*?\.mp4/)", url)
@@ -164,28 +177,96 @@ def hint_transport(url, source):
         _transport_memo.setdefault(_stream_root(url), source == "hdrezka")
 
 
+def _direct_allowed():
+    if VIDEO_DIRECT == "off":
+        return False
+    if VIDEO_DIRECT == "on":
+        return True
+    with _video_proxy_lock:
+        return time.time() >= _direct_state["off_until"]
+
+
+def _proxy_memo_set(root, value):
+    with _video_proxy_lock:
+        if len(_video_proxy_memo) > 4096:
+            _video_proxy_memo.clear()
+        _video_proxy_memo[root] = value
+
+
+def _note_direct(ok):
+    with _video_proxy_lock:
+        if ok:
+            _direct_state["strikes"] = 0
+        else:
+            _direct_state["strikes"] += 1
+            if _direct_state["strikes"] >= 3:  # CDN стабильно режет — 15 мин не пробуем
+                _direct_state["off_until"] = time.time() + 900
+
+
+def _video_ok(r):
+    """Годен ли ответ как видеопоток (а не страница-заглушка CDN)."""
+    if r is None or r.status_code in (403, 404, 410, 451):
+        return False
+    return "text/html" not in (r.headers.get("Content-Type") or "").lower()
+
+
+def _cffi_session(proxied):
+    attr = "proxy_session" if proxied else "direct_session"
+    s = getattr(_video_local, attr, None)
+    if s is None:
+        s = _cffi.Session(impersonate=HDREZKA_IMPERSONATE,
+                          proxies=(make_video_proxy() or None) if proxied else None)
+        setattr(_video_local, attr, s)
+    return s
+
+
+def _cffi_try(headers, url, stream, timeout, proxied):
+    try:
+        return _cffi_session(proxied).get(url, headers=headers, stream=stream, timeout=timeout)
+    except Exception:
+        return None
+
+
 def video_get(url, headers=None, stream=False, timeout=30):
     headers = dict(headers or {})
     if _cffi is not None:
         root = _stream_root(url)
         with _transport_lock:
             prefer = _transport_memo.get(root)
+        with _video_proxy_lock:
+            need_proxy = _video_proxy_memo.get(root)
         if prefer is not False:  # неизвестно или известно, что нужен curl_cffi
             # User-Agent задаёт имперсонация: свой UA конфликтует с TLS-отпечатком
             # (CDN отвечает 410), поэтому его выкидываем.
             cffi_headers = dict(headers)
             cffi_headers.pop("User-Agent", None)
-            s = getattr(_video_local, "session", None)
-            if s is None:
-                s = _cffi.Session(impersonate=HDREZKA_IMPERSONATE,
-                                  proxies=make_video_proxy() or None)
-                _video_local.session = s
-            r = s.get(url, headers=cffi_headers, stream=stream, timeout=timeout)
-            if r.status_code not in (403, 410):
-                if prefer is None:
-                    _memo_set(root, True)
-                return r
-            r.close()
+
+            # 1) прямое подключение — обычно в разы быстрее прокси
+            if _direct_allowed() and need_proxy is not True:
+                r = _cffi_try(cffi_headers, url, stream, min(timeout, 6), proxied=False)
+                if _video_ok(r):
+                    _note_direct(True)
+                    _proxy_memo_set(root, False)
+                    if prefer is None:
+                        _memo_set(root, True)
+                    return r
+                if r is not None:
+                    r.close()
+                if VIDEO_PROXY:
+                    _note_direct(False)
+                    if VIDEO_DIRECT != "on":
+                        _proxy_memo_set(root, True)
+
+            # 2) через прокси (прямой доступ закрыт или выключен)
+            if VIDEO_PROXY and VIDEO_DIRECT != "on":
+                r = _cffi_try(cffi_headers, url, stream, timeout, proxied=True)
+                if _video_ok(r):
+                    _proxy_memo_set(root, True)
+                    if prefer is None:
+                        _memo_set(root, True)
+                    return r
+                if r is not None:
+                    r.close()
             _memo_set(root, False)
     return _get_session().get(url, headers=headers or None, stream=stream,
                               timeout=timeout, proxies=make_video_proxy())
@@ -1211,6 +1292,83 @@ def api_diag():
                 except Exception as e:
                     entry[label] = {"error": f"{type(e).__name__}: {e}"}
             steps["players"].append(entry)
+
+    out["videoDirectMode"] = VIDEO_DIRECT
+
+    # проверка самого видеопотока: пустит ли этот сервер видео напрямую
+    stream_url = (request.args.get("stream") or "").strip()
+    if not stream_url and film_url:
+        try:
+            film = cache_get(f"film:{film_url}", 600) or (
+                kinogo_film(film_url) if detect_source(film_url) == "kinogo"
+                else hdrezka_film(film_url))
+            for s in (film.get("sources") or []):
+                if s.get("hls"):
+                    stream_url = s["hls"]
+                    break
+        except Exception as e:
+            out["streamResolveError"] = f"{type(e).__name__}: {e}"
+
+    if stream_url:
+        def _probe(u, proxied):
+            entry = {"ok": False, "ms": None, "status": None, "type": "", "bytes": 0, "error": None}
+            t0 = time.time()
+            try:
+                if _cffi is not None:
+                    sess = _cffi.Session(impersonate=HDREZKA_IMPERSONATE,
+                                         proxies=(make_video_proxy() or None) if proxied else None)
+                    h = dict(default_headers)
+                    h.pop("User-Agent", None)
+                    r = sess.get(u, headers=h, stream=True, timeout=12)
+                else:
+                    r = _get_session().get(u, headers=default_headers, stream=True, timeout=12,
+                                           proxies=make_video_proxy() if proxied else {})
+                entry["status"] = r.status_code
+                entry["type"] = r.headers.get("Content-Type", "")
+                body = b"".join(r.iter_content(65536))
+                entry["bytes"] = len(body)
+                entry["ok"] = (r.status_code == 200 and entry["bytes"] > 0
+                               and "text/html" not in entry["type"].lower())
+                r.close()
+            except Exception as e:
+                entry["error"] = f"{type(e).__name__}: {e}"
+            entry["ms"] = int((time.time() - t0) * 1000)
+            return entry
+
+        check = {"url": stream_url, "master": {}, "variant": {}}
+        for label, proxied in (("direct", False), ("proxy", True)):
+            if proxied and not VIDEO_PROXY:
+                continue
+            check["master"][label] = _probe(stream_url, proxied)
+
+        # берём рабочий master и проверяем первый вариант (это самый тяжёлый файл)
+        for label, proxied in (("direct", False), ("proxy", True)):
+            if check["master"].get(label, {}).get("ok"):
+                try:
+                    if _cffi is not None:
+                        sess = _cffi.Session(impersonate=HDREZKA_IMPERSONATE,
+                                             proxies=(make_video_proxy() or None) if proxied else None)
+                        h = dict(default_headers)
+                        h.pop("User-Agent", None)
+                        txt = sess.get(stream_url, headers=h, timeout=12).text
+                    else:
+                        txt = _get_session().get(stream_url, headers=default_headers, timeout=12,
+                                                 proxies=make_video_proxy() if proxied else {}).text
+                    for line in txt.splitlines():
+                        line = line.strip()
+                        if line and not line.startswith("#"):
+                            var = urljoin(stream_url, line)
+                            for l2, p2 in (("direct", False), ("proxy", True)):
+                                if p2 and not VIDEO_PROXY:
+                                    continue
+                                check["variant"][l2] = _probe(var, p2)
+                            break
+                except Exception as e:
+                    check["variantError"] = f"{type(e).__name__}: {e}"
+                break
+
+        check["directUsable"] = bool(check["master"].get("direct", {}).get("ok"))
+        out["stream"] = check
 
     return jsonify(out)
 
