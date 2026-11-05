@@ -17,6 +17,8 @@
     PROXY_GATEWAY    - шлюз прокси-провайдера: prt (по умолчанию) | usa | bra | nzl
     VIDEO_PROXY      - прокси для видеосегментов (по умолчанию = прокси страниц;
                        off/none/direct — пускать видео напрямую)
+    PROXY_CONN_LIMIT - сколько запросов к прокси держать одновременно (по умолчанию 4;
+                       0 — без ограничения). Провайдер отвечает 429 при перегрузе.
     PORT             - порт сервера (по умолчанию 8000)
     HOST             - адрес привязки (по умолчанию 0.0.0.0)
 
@@ -150,6 +152,18 @@ _video_proxy_memo = {}
 _video_proxy_lock = threading.Lock()
 _direct_state = {"strikes": 0, "off_until": 0.0}
 
+# Прокси-провайдер режет по лимиту одновременных соединений: при пачке
+# параллельных запросов он отвечает HTTP 429 на CONNECT, и видео перестаёт
+# грузиться/перематываться. Телефон (iPhone, нативный HLS) открывает сразу
+# несколько соединений, поэтому упираемся в лимит. Пропускаем через прокси не
+# больше PROXY_CONN_LIMIT одновременных запросов (0 — без ограничения).
+try:
+    PROXY_CONN_LIMIT = int(os.environ.get("PROXY_CONN_LIMIT", "4") or 4)
+except ValueError:
+    PROXY_CONN_LIMIT = 4
+_proxy_slots = (threading.BoundedSemaphore(PROXY_CONN_LIMIT)
+                if PROXY_CONN_LIMIT > 0 and VIDEO_PROXY else None)
+
 
 def _stream_root(url):
     m = re.match(r"^(.*?\.mp4/)", url)
@@ -203,11 +217,50 @@ def _note_direct(ok):
                 _direct_state["off_until"] = time.time() + 900
 
 
+def _note_proxy_limited():
+    """Прокси ответил 429/5xx — снимаем паузу с прямого доступа: не бьём дальше
+    по уже перегруженному прокси, ещё раз пробуем напрямую."""
+    with _video_proxy_lock:
+        _direct_state["off_until"] = 0.0
+        _direct_state["strikes"] = 0
+
+
+# 429 — прокси-провайдер режет по лимиту; 407/408/5xx — временный сбой на пути.
+_RETRY_CODES = {407, 408, 425, 429, 500, 502, 503, 504}
+
+
 def _video_ok(r):
-    """Годен ли ответ как видеопоток (а не страница-заглушка CDN)."""
-    if r is None or r.status_code in (403, 404, 410, 451):
+    """Годен ли ответ как видеопоток (а не страница-заглушка CDN или ошибка прокси)."""
+    if r is None or r.status_code in (403, 404, 410, 451) or r.status_code in _RETRY_CODES:
         return False
     return "text/html" not in (r.headers.get("Content-Type") or "").lower()
+
+
+def _retry_get(fn, attempts=3, delay=0.5):
+    """GET с повтором при временных ошибках (лимит прокси, 5xx).
+
+    Между попытками пауза с ростом — короткие всплески 429 так проходят.
+    Возвращает последний ответ; если все попытки упали с исключением — бросает его.
+    """
+    last, last_exc = None, None
+    for i in range(attempts):
+        last_exc = None
+        try:
+            last = fn()
+        except Exception as e:
+            last, last_exc = None, e
+        if last is not None and last.status_code not in _RETRY_CODES:
+            return last
+        if i + 1 < attempts:
+            if last is not None:      # промежуточный «плохой» ответ не держим
+                last.close()
+                last = None
+            time.sleep(delay * (i + 1))
+    if last is not None:
+        return last
+    if last_exc is not None:
+        raise last_exc
+    return None
 
 
 def _cffi_session(proxied):
@@ -257,19 +310,25 @@ def video_get(url, headers=None, stream=False, timeout=30):
                     if VIDEO_DIRECT != "on":
                         _proxy_memo_set(root, True)
 
-            # 2) через прокси (прямой доступ закрыт или выключен)
+            # 2) через прокси (прямой доступ закрыт или выключен).
+            # Повторяем с паузой: провайдер отдаёт 429 при всплеске запросов.
             if VIDEO_PROXY and VIDEO_DIRECT != "on":
-                r = _cffi_try(cffi_headers, url, stream, timeout, proxied=True)
+                r = _retry_get(lambda: _cffi_try(cffi_headers, url, stream, timeout,
+                                                 proxied=True), attempts=3, delay=0.6)
                 if _video_ok(r):
                     _proxy_memo_set(root, True)
                     if prefer is None:
                         _memo_set(root, True)
                     return r
                 if r is not None:
+                    if r.status_code in _RETRY_CODES:
+                        _note_proxy_limited()
                     r.close()
             _memo_set(root, False)
-    return _get_session().get(url, headers=headers or None, stream=stream,
-                              timeout=timeout, proxies=make_video_proxy())
+    return _retry_get(
+        lambda: _get_session().get(url, headers=headers or None, stream=stream,
+                                   timeout=timeout, proxies=make_video_proxy()),
+        attempts=3, delay=0.6)
 
 
 # общий пул keep-alive соединений: убирает TLS-рукопожатие на каждом
@@ -322,9 +381,10 @@ def http_get(url, timeout=25, video=False, use_proxy=True):
     proxies = None
     if use_proxy:
         proxies = make_video_proxy() if video else make_proxy()
-    r = _get_session().get(url, headers=default_headers, timeout=timeout,
-                           proxies=proxies)
-    return r
+    return _retry_get(
+        lambda: _get_session().get(url, headers=default_headers, timeout=timeout,
+                                   proxies=proxies),
+        attempts=3 if use_proxy else 1, delay=0.6)
 
 
 # Страницы плееров-эмбедов (nextembed, ortified, stravers …) блокируют IP прокси
@@ -771,9 +831,12 @@ def _hd_get(url, referer=None, timeout=30, use_proxy=True, headers=None):
         h.update(headers)
     if _cffi is not None:
         s = _hd_session() if use_proxy else _hd_direct_session()
-        return s.get(url, headers=h, timeout=timeout)
-    return _get_session().get(url, headers={**default_headers, **h},
-                              timeout=timeout, proxies=make_proxy() if use_proxy else None)
+        return _retry_get(lambda: s.get(url, headers=h, timeout=timeout),
+                          attempts=3 if use_proxy else 1, delay=0.6)
+    return _retry_get(
+        lambda: _get_session().get(url, headers={**default_headers, **h},
+                                   timeout=timeout, proxies=make_proxy() if use_proxy else None),
+        attempts=3 if use_proxy else 1, delay=0.6)
 
 
 def _hd_post(url, data, referer=None, timeout=30):
@@ -1577,10 +1640,30 @@ def api_proxy():
     if request.headers.get("Range"):
         headers["Range"] = request.headers["Range"]
 
+    # Держим не больше PROXY_CONN_LIMIT одновременных запросов к прокси: телефон
+    # открывает пачку соединений, а провайдер на лимит отвечает 429.
+    slot = _proxy_slots
+    if slot is not None and not slot.acquire(timeout=25):
+        return json_error("Прокси занят, попробуйте ещё раз", 503)
+    released = [slot is None]
+
+    def release():
+        if not released[0]:
+            released[0] = True
+            slot.release()
+
     try:
         upstream = video_get(target, headers=headers, stream=True, timeout=30)
     except Exception as e:
+        release()
         return json_error(f"{type(e).__name__}: {e}")
+
+    # Ошибку прокси не отдаём плееру как «видео» — иначе чёрный экран/поломка перемотки.
+    if upstream.status_code in _RETRY_CODES:
+        code = upstream.status_code
+        upstream.close()
+        release()
+        return json_error(f"Источник/прокси перегружен ({code})", 503)
 
     ctype = upstream.headers.get("Content-Type", "").lower()
     it = upstream.iter_content(chunk_size=64 * 1024)
@@ -1592,6 +1675,8 @@ def api_proxy():
     # плейлист HLS -> переписываем все ссылки на прокси
     if "mpegurl" in ctype or first[:7] == b"#EXTM3U":
         body = _rewrite_m3u8((first + b"".join(it)).decode("utf-8", "ignore"), target)
+        upstream.close()
+        release()
         return Response(body, status=upstream.status_code,
                         headers={"Content-Type": "application/vnd.apple.mpegurl",
                                  "Cache-Control": "no-store"})
@@ -1608,8 +1693,11 @@ def api_proxy():
                 yield chunk
         finally:
             upstream.close()  # вернуть соединение в пул (или закрыть при обрыве)
+            release()
 
-    return Response(stream_with_context(gen()), status=upstream.status_code, headers=resp_headers)
+    resp = Response(stream_with_context(gen()), status=upstream.status_code, headers=resp_headers)
+    resp.call_on_close(release)  # подстраховка, если тело так и не поехало
+    return resp
 
 
 @app.route("/api/subtitle")
