@@ -800,12 +800,12 @@ const DCACHE = {
   _mem: new Map(),
   get(k){
     if(this._mem.has(k)) return this._mem.get(k);
-    try{ const s = sessionStorage.getItem("k88:dc:" + k); if(s){ const v = JSON.parse(s); this._mem.set(k, v); return v; } }catch(e){}
+    try{ const s = sessionStorage.getItem("k88:dc2:" + k); if(s){ const v = JSON.parse(s); this._mem.set(k, v); return v; } }catch(e){}
     return null;
   },
   set(k, v){
     this._mem.set(k, v);
-    try{ const s = JSON.stringify(v); if(s.length < 300000) sessionStorage.setItem("k88:dc:" + k, s); }catch(e){}
+    try{ const s = JSON.stringify(v); if(s.length < 300000) sessionStorage.setItem("k88:dc2:" + k, s); }catch(e){}
   }
 };
 
@@ -1258,8 +1258,9 @@ async function openFilm(url, season, episode){
     if(seq !== _openSeq) return;                                   // пользователь уже ушёл
     if(!data.ok) throw new Error(data.error);
     DCACHE.set("film:" + url, data.film);
-    /* доприменяем только если ещё ничего не показали или у кэша не было потока */
-    if(!cached || (!hasPlayable(cached) && hasPlayable(data.film) && state.mode === null)){
+    /* применяем свежие данные, если поток появился/пропал: иначе устаревший
+       «чужой» поток из кэша так и висел бы на экране */
+    if(!cached || hasPlayable(cached) !== hasPlayable(data.film)){
       presentFilm(url, data.film, season, episode);
     }
   }catch(err){

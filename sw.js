@@ -5,8 +5,8 @@
      как офлайн-запас (устаревшее «нет потока» вводить в заблуждение нельзя);
    - каталог/поиск/фильтры/постеры: stale-while-revalidate — открытие берётся
      из кэша мгновенно, обновление прилетает в фоне. */
-const CACHE = "k88-v2";
-const API_CACHE = "k88-api-v1";
+const CACHE = "k88-v3";
+const API_CACHE = "k88-api-v2";
 const API_SWR = ["/api/home", "/api/browse", "/api/search", "/api/filters", "/api/posters"];
 const API_CACHE_MAX = 300;     // ограничиваем рост кэша API
 
