@@ -26,6 +26,7 @@ from urllib.parse import urlencode, quote
 
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
 from telegram.constants import ChatAction, ParseMode
+from telegram.error import Conflict, TelegramError
 from telegram.ext import (
     ApplicationBuilder,
     CallbackQueryHandler,
@@ -366,6 +367,22 @@ async def on_cb(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
         return
 
 
+async def on_error(update: object, ctx: ContextTypes.DEFAULT_TYPE):
+    """Ловит ошибки сети/polling, чтобы не заливать лог трейсбеком."""
+    err = ctx.error
+    if isinstance(err, Conflict):
+        log.warning(
+            "409 Conflict: Telegram опрашивают сразу несколько экземпляров бота "
+            "(вторая реплика Railway или запущенный локально bot.py). "
+            "Оставьте ровно один — бот сам восстановится, когда лишний процесс умрёт."
+        )
+        return
+    if isinstance(err, TelegramError):
+        log.warning("Ошибка Telegram API: %s", err)
+        return
+    log.exception("Ошибка обработки апдейта", exc_info=err)
+
+
 def main():
     if not BOT_TOKEN:
         raise SystemExit("BOT_TOKEN не задан")
@@ -374,8 +391,9 @@ def main():
     app.add_handler(CommandHandler("help", cmd_start))
     app.add_handler(CallbackQueryHandler(on_cb))
     app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, on_text))
+    app.add_error_handler(on_error)
     log.info("Бот запущен. Плеер: %s", WEB_BASE_URL or "(WEB_BASE_URL не задан)")
-    app.run_polling(allowed_updates=Update.ALL_TYPES)
+    app.run_polling(allowed_updates=Update.ALL_TYPES, drop_pending_updates=True)
 
 
 if __name__ == "__main__":

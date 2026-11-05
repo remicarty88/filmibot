@@ -122,6 +122,27 @@ main{padding-bottom:80px}
 .state{text-align:center;padding:90px 20px;color:var(--muted)}
 .state .big{font-size:54px;margin-bottom:14px}
 .state h3{color:var(--txt);font-family:var(--f-head);margin:0 0 8px}
+
+/* ---------- фильтры каталога ---------- */
+.fbar{display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between;margin:0 0 22px}
+.ftabs{display:flex;gap:8px;overflow-x:auto;scrollbar-width:none;padding:2px;max-width:100%}
+.ftabs::-webkit-scrollbar{display:none}
+.ftab{flex:none;border:1px solid var(--line);background:var(--glass);color:var(--muted);font-size:14px;font-weight:600;padding:9px 18px;border-radius:999px;transition:.2s;backdrop-filter:blur(10px)}
+.ftab:hover{color:var(--txt)}
+.ftab.on{color:#1a1204;background:linear-gradient(135deg,var(--gold2),var(--gold));border-color:transparent}
+.fsel{display:flex;gap:8px;flex-wrap:wrap}
+.fm-body{display:grid;gap:12px;padding:6px 6px 8px;overflow:auto}
+.fm-row{display:grid;gap:7px}
+.fm-row span{font-size:12.5px;font-weight:700;color:var(--muted);padding-left:4px}
+.fm-f{display:flex;gap:10px;padding:12px 6px 4px}
+.fm-f .btn{flex:1;justify-content:center;padding:14px 18px}
+.fsel select,.fm-row select{appearance:none;-webkit-appearance:none;border:1px solid var(--line);background-color:var(--glass);color:var(--txt);font-size:14px;font-weight:600;padding:10px 34px 10px 15px;border-radius:12px;cursor:pointer;backdrop-filter:blur(10px);background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23f5b83d' stroke-width='3' stroke-linecap='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center}
+.fsel select:focus,.fm-row select:focus{outline:none;border-color:var(--gold);box-shadow:0 0 0 4px rgba(245,184,61,.12)}
+.fsel select option,.fm-row select option{background:#12121a;color:var(--txt)}
+.fsel select:disabled,.fm-row select:disabled{opacity:.45}
+.fm-row select{width:100%}
+.more-wrap{display:flex;justify-content:center;padding:34px 0 6px}
+.more-wrap .btn{min-width:220px;justify-content:center}
 .spinner{width:38px;height:38px;border-radius:50%;margin:0 auto 16px;border:3px solid var(--line);border-top-color:var(--gold);animation:spin .8s linear infinite}
 @keyframes spin{to{transform:rotate(360deg)}}
 
@@ -267,6 +288,12 @@ footer b{font-family:var(--f-head);color:var(--txt)}
   .grid{grid-template-columns:repeat(3,1fr);gap:18px 10px}
   .sec-title{margin:calc(var(--st) + 84px) 0 18px}.sec-title h2{font-size:22px}
   .state{padding:calc(var(--st) + 120px) 20px 60px}
+  .fbar{gap:10px;margin-bottom:16px}
+  .ftabs{width:100%}
+  .ftab{font-size:13px;padding:8px 15px}
+  .fsel{width:100%;flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;padding-bottom:2px}
+  .fsel::-webkit-scrollbar{display:none}
+  .fsel select{flex:none;font-size:13.5px;padding:10px 32px 10px 14px}
 
   /* tab bar */
   .tabbar{display:flex;position:fixed;left:0;right:0;bottom:0;z-index:70;padding:6px 8px calc(6px + var(--sb));background:#0d0d12;border-top:1px solid var(--line);transform:translateZ(0)}
@@ -426,6 +453,10 @@ body.chat-open .chatdock .room-chat{display:flex}
 .me-btn:hover{border-color:var(--gold);transform:translateY(-1px)}
 .me-btn span{width:31px;height:31px;border-radius:50%;display:grid;place-items:center;font-weight:800;font-size:13.5px;color:#8a8794;background:rgba(255,255,255,.08)}
 .me-btn span.on{color:#160f02}
+.fbtn{flex:none;display:inline-flex;align-items:center;gap:8px;height:42px;padding:0 16px;border-radius:12px;border:1px solid var(--line);background:var(--glass);color:var(--txt);font-size:14px;font-weight:600;transition:.2s}
+.fbtn:hover{border-color:var(--gold)}
+.fbtn svg{width:17px;height:17px;flex:none}
+.fbtn.on{color:#1a1204;background:linear-gradient(135deg,var(--gold2),var(--gold));border-color:transparent}
 .me-fab{display:none}
 .me-fab span{width:28px;height:28px;border-radius:50%;display:grid;place-items:center;font-weight:800;font-size:12px;color:#8a8794;background:rgba(255,255,255,.1)}
 .me-fab span.on{color:#160f02}
@@ -482,6 +513,8 @@ body.chat-open .chatdock .room-chat{display:flex}
   .cab-bg.show .cab{transform:none}
   .cab-ava{width:58px;height:58px;font-size:22px;border-radius:18px}
   .me-btn{width:38px;height:38px}.me-btn span{width:28px;height:28px;font-size:12.5px}
+  .fbtn{width:38px;height:38px;padding:0;justify-content:center}
+  .fbtn span{display:none}
   .head-right{gap:8px}
 }
 @media(prefers-reduced-motion:reduce){*{transition-duration:.01ms!important;animation-duration:.01ms!important}}
@@ -494,10 +527,10 @@ body.chat-open .chatdock .room-chat{display:flex}
     <div class="logo" id="logo">КИНО<em>88</em></div>
     <nav>
       <button class="on" data-nav="home">Главная</button>
-      <button data-nav="genres">Жанры</button>
-      <button data-nav="Сериал">Сериалы</button>
-      <button data-nav="Мультфильм">Мультфильмы</button>
-      <button data-nav="Аниме">Аниме</button>
+      <button data-browse="films">Фильмы</button>
+      <button data-browse="series">Сериалы</button>
+      <button data-browse="cartoons">Мультфильмы</button>
+      <button data-browse="anime">Аниме</button>
     </nav>
     <div class="head-right">
       <form class="search" id="searchForm" autocomplete="off">
@@ -505,6 +538,7 @@ body.chat-open .chatdock .room-chat{display:flex}
         <input id="q" type="text" placeholder="Фильмы, сериалы, аниме…">
         <button type="submit">Найти</button>
       </form>
+      <button class="fbtn" id="filtersBtn" aria-label="Фильтры"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 6h16M7 12h10M10 18h4"/></svg><span>Фильтры</span></button>
       <button class="me-btn" id="meBtn" aria-label="Личный кабинет"><span id="meAva">?</span></button>
     </div>
   </div>
@@ -542,6 +576,22 @@ body.chat-open .chatdock .room-chat{display:flex}
   <section id="results" class="hidden wrap">
     <div class="sec-title"><h2 id="resTitle">Результаты</h2><span id="resCount"></span></div>
     <div class="grid" id="resultsGrid"></div>
+  </section>
+
+  <!-- BROWSE (каталог с фильтрами жанр/год/страна) -->
+  <section id="browse" class="hidden wrap">
+    <div class="sec-title"><h2 id="browseTitle">Каталог</h2><span id="browseCount"></span></div>
+    <div class="fbar">
+      <div class="ftabs" id="fTabs"></div>
+      <div class="fsel">
+        <select id="fSort" aria-label="Сортировка"></select>
+        <select id="fYear" aria-label="Год"></select>
+        <select id="fGenre" aria-label="Жанр"></select>
+        <select id="fCountry" aria-label="Страна"></select>
+      </div>
+    </div>
+    <div class="grid" id="browseGrid"></div>
+    <div class="more-wrap hidden" id="moreWrap"><button class="btn ghost" id="moreBtn">Показать ещё</button></div>
   </section>
 
   <section id="loading" class="state hidden"><div class="spinner"></div>Загружаем…</section>
@@ -630,12 +680,31 @@ body.chat-open .chatdock .room-chat{display:flex}
 <div class="tabbar" id="tabbar">
   <button class="on" data-tab="home"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11 12 4l9 7v8a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/></svg>Главная</button>
   <button data-tab="search"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>Поиск</button>
-  <button data-tab="Сериал"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="12" rx="2"/><path d="M8 21h8M12 17v4"/></svg>Сериалы</button>
-  <button data-tab="Мультфильм"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M8.5 14a4.5 4.5 0 0 0 7 0M9 9.5h.01M15 9.5h.01"/></svg>Мульты</button>
-  <button data-tab="Аниме"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 3 2.6 5.6 6.1.7-4.5 4.2 1.2 6L12 16.5 6.6 19.5l1.2-6L3.3 9.3l6.1-.7z"/></svg>Аниме</button>
+  <button data-tab="browse:series"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="12" rx="2"/><path d="M8 21h8M12 17v4"/></svg>Сериалы</button>
+  <button data-tab="browse:cartoons"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M8.5 14a4.5 4.5 0 0 0 7 0M9 9.5h.01M15 9.5h.01"/></svg>Мульты</button>
+  <button data-tab="browse:anime"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 3 2.6 5.6 6.1.7-4.5 4.2 1.2 6L12 16.5 6.6 19.5l1.2-6L3.3 9.3l6.1-.7z"/></svg>Аниме</button>
   <button data-tab="me"><span class="tb-ava" id="tbAva">?</span>Профиль</button>
 </div>
 <div class="sheet-bg" id="sheetBg"><div class="sheet" id="sheet"><div class="grab"></div><h3 id="sheetTitle"></h3><div class="sheet-list" id="sheetList"></div></div></div>
+
+<!-- Панель фильтров (кнопка «Фильтры» у поиска) -->
+<div class="sheet-bg" id="fModal">
+  <div class="sheet">
+    <div class="grab"></div>
+    <h3>Фильтры</h3>
+    <div class="fm-body">
+      <label class="fm-row"><span>Категория</span><select id="fmCat"></select></label>
+      <label class="fm-row"><span>Жанр</span><select id="fmGenre"></select></label>
+      <label class="fm-row"><span>Год</span><select id="fmYear"></select></label>
+      <label class="fm-row"><span>Страна</span><select id="fmCountry"></select></label>
+      <label class="fm-row"><span>Сортировка</span><select id="fmSort"></select></label>
+    </div>
+    <div class="fm-f">
+      <button class="btn ghost" id="fmReset">Сбросить</button>
+      <button class="btn main" id="fmApply">Показать</button>
+    </div>
+  </div>
+</div>
 
 <!-- совместный просмотр: панель комнаты -->
 <div class="room-bg" id="roomBg">
@@ -711,7 +780,7 @@ body.chat-open .chatdock .room-chat{display:flex}
 <script src="https://cdn.dashjs.org/v4.7.4/dash.all.min.js"></script>
 <script>
 const $ = id => document.getElementById(id);
-const SOURCE = "kinogo";
+const SOURCE = "hdrezka";
 const GENRES = ["Боевик","Комедия","Драма","Ужасы","Фантастика","Триллер","Мелодрама","Приключения","Детектив","Фэнтези","Мультфильм","Аниме","Сериал"];
 const state = { film:null, rows:[], featured:[], featIdx:0, lastView:"home", seasons:[], curSeason:null, curEp:null, mode:null };
 let hls = null, dash = null;
@@ -730,7 +799,7 @@ function toast(msg, kind){
   clearTimeout(t._t); t._t = setTimeout(()=>t.classList.remove("show"), 3400);
 }
 function view(name){
-  ["home","results","loading","error","filmView"].forEach(id => $(id).classList.toggle("hidden", id !== name));
+  ["home","results","browse","loading","error","filmView"].forEach(id => $(id).classList.toggle("hidden", id !== name));
   if(name !== "filmView") $("filmBg").style.backgroundImage = "";
   if(name !== "loading") state.lastView = name === "filmView" ? state.lastView : name;
   window.scrollTo({top:0, behavior:"instant"});
@@ -747,6 +816,8 @@ const IMG_CDN = "https://wsrv.nl/?url=";
 function poster(u, w, h){
   if(!u) return u;
   if(u.startsWith("//")) u = "https:" + u;
+  /* постеры hdrezka закрыты Cloudflare — тянем через свой прокси */
+  if(/hdrezka\./i.test(u)) return "/api/img?url=" + encodeURIComponent(u) + (w && h ? "&w=" + w + "&h=" + h : "");
   if(!IMG_CDN || !/^https?:/i.test(u)) return u;
   return IMG_CDN + encodeURIComponent(u.replace(/^https?:\/\//i, "")) +
          "&w=" + w + "&h=" + h + "&fit=cover&output=webp&q=88&sharp=1&sharpf=spline";
@@ -785,6 +856,9 @@ let _pfTimer = null;
 function cardEl(it){
   const c = document.createElement("div");
   c.className = "card";
+  if(it.url) c.dataset.url = it.url;
+  /* у hdrezka в листингах только мелкие превью — помечаем карточку для догрузки HQ */
+  if(it.url && it.image && /hdrezka\./i.test(it.image)) c.dataset.hqneed = "1";
   const img = it.image
     ? `<img src="${esc(poster(it.image, 400, 600))}" loading="lazy" decoding="async" alt=""
             onerror="this.onerror=null;this.src='${esc(it.image)}'">`
@@ -841,6 +915,7 @@ function renderRows(){
     box.appendChild(sec);
   });
   paintViews();
+  watchPosters(box);
 }
 function setHero(){
   const it = state.featured[state.featIdx]; if(!it) return;
@@ -851,6 +926,7 @@ function setHero(){
   $("heroMeta").innerHTML = (it.year ? `<span class="pill-m g">${it.year}</span>` : "") + `<span class="pill-m">Смотреть онлайн</span><span class="pill-m">HD</span>`;
   $("heroPlay").onclick = $("heroPoster").onclick = () => openFilm(it.url);
   prefetchFilm(it.url);
+  hydrateHero(it);
 }
 $("heroNext").onclick = () => { state.featIdx = (state.featIdx + 1) % state.featured.length; setHero(); };
 
@@ -868,18 +944,249 @@ async function runSearch(q, title){
     list.forEach(it => g.appendChild(cardEl({...it, title: it.title.replace(/\s*\(\d{4}\)\s*$/,"")})));
     paintViews();
     view("results");
+    watchPosters(g);
   }catch(err){ $("errorText").textContent = err.message; view("error"); }
 }
 $("searchForm").addEventListener("submit", e => { e.preventDefault(); const q = $("q").value.trim(); if(q) runSearch(q); });
 $("logo").onclick = goHome;
 function goHome(){ $("q").value = ""; view("home"); document.querySelectorAll("nav button").forEach(b => b.classList.toggle("on", b.dataset.nav === "home")); }
 document.querySelectorAll("nav button").forEach(b => b.onclick = () => {
-  const n = b.dataset.nav;
+  const n = b.dataset.nav, br = b.dataset.browse;
+  if(br) return runBrowse(br);
   if(n === "home") return goHome();
   if(n === "genres"){ view("home"); setTimeout(() => $("genres").scrollIntoView({behavior:"smooth", block:"center"}), 30); return; }
-  runSearch(n, n === "Сериал" ? "Сериалы" : n === "Мультфильм" ? "Мультфильмы" : n);
+  runSearch(n, n);
 });
-$("backBtn").onclick = () => { stopPlayer(); view(state.lastView === "results" ? "results" : "home"); };
+$("backBtn").onclick = () => { stopPlayer(); view(state.lastView === "results" || state.lastView === "browse" ? state.lastView : "home"); };
+
+/* ---------- каталог с фильтрами (жанр / год / страна) ---------- */
+const BROWSE_CATS = [
+  {key:"films", label:"Фильмы"},
+  {key:"series", label:"Сериалы"},
+  {key:"cartoons", label:"Мультфильмы"},
+  {key:"cartoonseries", label:"Мультсериалы"},
+  {key:"anime", label:"Аниме"},
+  {key:"animeseries", label:"Аниме-сериалы"}
+];
+const browse = {cat:"films", page:1, pageSize:0, genre:"", year:"", country:"", sort:""};
+let _browseSeq = 0;
+const _filtersCache = {};
+
+function catLabel(k){ const c = BROWSE_CATS.find(x => x.key === k); return c ? c.label : "Каталог"; }
+
+function renderFTabs(){
+  const box = $("fTabs"); if(!box) return;
+  box.innerHTML = "";
+  BROWSE_CATS.forEach(c => {
+    const b = document.createElement("button");
+    b.className = "ftab" + (c.key === browse.cat ? " on" : "");
+    b.textContent = c.label;
+    b.onclick = () => { if(c.key === browse.cat) return; hap("s"); runBrowse(c.key); };
+    box.appendChild(b);
+  });
+  document.querySelectorAll("nav button").forEach(x =>
+    x.classList.toggle("on", !!x.dataset.browse && x.dataset.browse === browse.cat));
+}
+function fillSelect(el, label, items, cur){
+  el.innerHTML = "";
+  const o0 = document.createElement("option"); o0.value = ""; o0.textContent = label; el.appendChild(o0);
+  (items || []).forEach(it => {
+    const o = document.createElement("option"); o.value = it.value; o.textContent = it.label; el.appendChild(o);
+  });
+  el.value = cur || "";
+}
+function paintFilters(){
+  const f = _filtersCache[browse.cat]; if(!f) return;
+  fillSelect($("fSort"), "Сортировка", f.sort, browse.sort);
+  fillSelect($("fYear"), "Год", f.year, browse.year);
+  fillSelect($("fGenre"), "Жанр", f.genre, browse.genre);
+  fillSelect($("fCountry"), "Страна", f.country, browse.country);
+  $("filtersBtn").classList.toggle("on", !!(browse.genre || browse.year || browse.country));
+}
+async function loadFilters(cat){
+  if(_filtersCache[cat]){ if(cat === browse.cat) paintFilters(); return; }
+  try{
+    const d = await fetch("/api/filters?cat=" + encodeURIComponent(cat)).then(r => r.json());
+    if(d.ok && d.filters){ _filtersCache[cat] = d.filters; if(cat === browse.cat) paintFilters(); }
+  }catch(e){}
+}
+
+/* HQ-обложки: в листингах сайт отдаёт только мелкие превью, поэтому крупные
+   постеры догружаем с сервера пакетами и подменяем картинку только после
+   полной загрузки (без мигания). Тянем лениво — только для тех карточек,
+   что попали в зону видимости, чтобы не бить по сайту лишний раз. */
+const _hqCache = {};                 // ссылка на фильм -> HQ-постер (или null)
+const _hqQueue = new Set();          // ссылки, ожидающие загрузки
+let _hqIO = null, _hqTimer = null;
+
+function applyHq(){
+  document.querySelectorAll(".card[data-hqneed]:not([data-hq])").forEach(c => {
+    const hq = _hqCache[c.dataset.url]; if(!hq) return;
+    const img = c.querySelector("img"); if(!img) return;
+    c.dataset.hq = "1";
+    const src = poster(hq, 400, 600);
+    const pre = new Image();
+    pre.onload = () => { if(img.isConnected) img.src = src; };
+    pre.src = src;
+  });
+}
+async function flushHq(){
+  const urls = [..._hqQueue]; _hqQueue.clear();
+  if(!urls.length) return;
+  for(let i = 0; i < urls.length; i += 24){
+    const batch = urls.slice(i, i + 24);
+    try{
+      const d = await fetch("/api/posters?urls=" + encodeURIComponent(batch.join(","))).then(r => r.json());
+      const p = (d && d.ok && d.posters) || {};
+      batch.forEach(u => { _hqCache[u] = p[u] || null; });
+    }catch(e){ batch.forEach(u => { _hqCache[u] = null; }); }
+  }
+  applyHq();
+}
+function watchPosters(root){
+  const sel = ".card[data-hqneed]:not([data-hq])";
+  if(!("IntersectionObserver" in window)){ // старые браузеры — просто грузим всё
+    (root || document).querySelectorAll(sel).forEach(c => { _hqQueue.add(c.dataset.url); });
+    if(_hqQueue.size){ clearTimeout(_hqTimer); _hqTimer = setTimeout(flushHq, 120); }
+    return;
+  }
+  if(!_hqIO){
+    _hqIO = new IntersectionObserver(entries => {
+      entries.forEach(en => {
+        if(!en.isIntersecting) return;
+        _hqIO.unobserve(en.target);
+        const u = en.target.dataset.url;
+        if(u && !(u in _hqCache)) _hqQueue.add(u);
+      });
+      if(_hqQueue.size){ clearTimeout(_hqTimer); _hqTimer = setTimeout(flushHq, 120); }
+    }, {rootMargin: "400px 0px"});
+  }
+  (root || document).querySelectorAll(sel).forEach(c => _hqIO.observe(c));
+}
+/* HQ для баннера на главной (там нужен крупный размер) */
+async function hydrateHero(it){
+  if(!it || !it.url) return;
+  if(_hqCache[it.url] === undefined){
+    try{
+      const d = await fetch("/api/posters?urls=" + encodeURIComponent(it.url)).then(r => r.json());
+      _hqCache[it.url] = (d && d.ok && d.posters && d.posters[it.url]) || null;
+    }catch(e){ _hqCache[it.url] = null; }
+    applyHq();
+  }
+  finishHero(it);
+}
+function finishHero(it){
+  const hq = _hqCache[it.url]; if(!hq) return;
+  if(state.featured[state.featIdx] !== it) return;
+  const src = poster(hq, 640, 960);
+  const pre = new Image();
+  pre.onload = () => {
+    if(state.featured[state.featIdx] !== it) return;
+    $("heroBg").style.backgroundImage = `url("${src}")`;
+    $("heroPoster").src = src;
+  };
+  pre.src = src;
+}
+
+async function runBrowse(cat, reset){
+  if(cat){
+    if(cat !== browse.cat || reset){ browse.page = 1; browse.genre = browse.year = browse.country = browse.sort = ""; }
+    browse.cat = cat;
+  }
+  view("browse");
+  renderFTabs();
+  loadFilters(browse.cat);
+  await loadBrowsePage(false);
+}
+async function loadBrowsePage(append){
+  const seq = ++_browseSeq;
+  const grid = $("browseGrid"), more = $("moreWrap"), btn = $("moreBtn");
+  $("browseTitle").textContent = catLabel(browse.cat);
+  if(!append){
+    grid.innerHTML = Array.from({length:12}, () => `<div class="card skel"><div class="poster-box"></div></div>`).join("");
+    $("browseCount").textContent = "";
+    more.classList.add("hidden");
+  }else{ btn.disabled = true; btn.textContent = "Загружаем…"; }
+  const qs = new URLSearchParams({cat: browse.cat, page: browse.page});
+  if(browse.genre) qs.set("genre", browse.genre);
+  if(browse.year) qs.set("year", browse.year);
+  if(browse.country) qs.set("country", browse.country);
+  if(browse.sort) qs.set("sort", browse.sort);
+  try{
+    const d = await fetch("/api/browse?" + qs.toString()).then(r => r.json());
+    if(seq !== _browseSeq) return;  // пришёл устаревший ответ — игнорируем
+    if(!d.ok) throw new Error(d.error || "Ошибка загрузки");
+    const items = d.items || [];
+    if(!append){
+      grid.innerHTML = "";
+      if(!items.length) grid.innerHTML = `<div class="state" style="grid-column:1/-1"><div class="big">🔍</div><h3>Ничего не найдено</h3>Попробуйте другие фильтры.</div>`;
+      browse.pageSize = items.length;
+    }
+    items.forEach(it => grid.appendChild(cardEl(it)));
+    paintViews();
+    $("browseCount").textContent = grid.querySelectorAll(".card").length + " показано";
+    more.classList.toggle("hidden", !items.length || (browse.pageSize > 0 && items.length < browse.pageSize));
+    watchPosters(grid);
+  }catch(e){
+    if(seq !== _browseSeq) return;
+    if(!append) grid.innerHTML = `<div class="state" style="grid-column:1/-1"><div class="big">🎞</div><h3>Не удалось загрузить каталог</h3>${esc(e.message)}<br><br><button class="btn main" onclick="runBrowse()">Повторить</button></div>`;
+    else toast(e.message, "err");
+  }finally{
+    if(seq === _browseSeq){ btn.disabled = false; btn.textContent = "Показать ещё"; }
+  }
+}
+
+(function bindBrowse(){
+  const on = (id, field) => $(id).addEventListener("change", e => {
+    browse[field] = e.target.value; browse.page = 1; loadBrowsePage(false);
+  });
+  on("fSort", "sort"); on("fYear", "year"); on("fGenre", "genre"); on("fCountry", "country");
+  $("moreBtn").onclick = () => { hap(); browse.page++; loadBrowsePage(true); };
+})();
+
+/* ---------- панель «Фильтры» у кнопки поиска ---------- */
+function fmFill(id, label, items, cur){
+  const el = $(id); if(!el) return;
+  el.innerHTML = "";
+  const o0 = document.createElement("option"); o0.value = ""; o0.textContent = label; el.appendChild(o0);
+  (items || []).forEach(it => {
+    const o = document.createElement("option"); o.value = it.value; o.textContent = it.label; el.appendChild(o);
+  });
+  el.value = cur || "";
+}
+async function fmSync(reset){
+  const cat = $("fmCat").value || "films";
+  await loadFilters(cat);
+  const f = _filtersCache[cat] || {genre:[], year:[], country:[], sort:[]};
+  const v = reset ? {} : {g:browse.genre, y:browse.year, c:browse.country, s:browse.sort};
+  fmFill("fmGenre", "Любой", f.genre, v.g);
+  fmFill("fmYear", "Любой год", f.year, v.y);
+  fmFill("fmCountry", "Любая страна", f.country, v.c);
+  fmFill("fmSort", "По умолчанию", f.sort, v.s);
+}
+async function openFilters(){
+  hap();
+  fmFill("fmCat", "Все категории", BROWSE_CATS.map(c => ({value:c.key, label:c.label})), browse.cat);
+  ["fmGenre","fmYear","fmCountry","fmSort"].forEach(id => fmFill(id, "Загрузка…", [], ""));
+  $("fModal").classList.add("show");
+  await fmSync(false);
+}
+function closeFilters(){ $("fModal").classList.remove("show"); }
+$("filtersBtn").onclick = openFilters;
+$("fModal").addEventListener("click", e => { if(e.target === $("fModal")) closeFilters(); });
+$("fmCat").addEventListener("change", () => fmSync(true));
+$("fmReset").onclick = () => { hap("s"); fmSync(true); };
+$("fmApply").onclick = () => {
+  browse.cat = $("fmCat").value || "films";
+  browse.genre = $("fmGenre").value;
+  browse.year = $("fmYear").value;
+  browse.country = $("fmCountry").value;
+  browse.sort = $("fmSort").value;
+  browse.page = 1;
+  closeFilters();
+  runBrowse(browse.cat);
+};
+document.addEventListener("keydown", e => { if(e.key === "Escape") closeFilters(); });
 
 /* ---------- страница фильма ---------- */
 async function openFilm(url, season, episode){
@@ -979,6 +1286,9 @@ function currentSources(){
   }
   return f.sources || [];
 }
+/* подсказка серверу: какой транспорт нужен для потока (hdrezka — TLS-имперсонация,
+   kinogo — обычный requests), чтобы не тратить запрос на пробу при старте */
+function srcHint(){ return (state.film && state.film.source) || SOURCE; }
 function startPlayback(){
   const srcs = currentSources();
   if(srcs.length && (srcs[0].dash || srcs[0].hls || srcs[0].mp4)){
@@ -1151,7 +1461,7 @@ function prefAudioIndex(labels, fallback){
 function playDash(source){
   const video = $("player");
   dash = dashjs.MediaPlayer().create();
-  dash.initialize(video, "/api/dash?url=" + encodeURIComponent(source.dash), true);
+  dash.initialize(video, "/api/dash?url=" + encodeURIComponent(source.dash) + "&src=" + srcHint(), true);
   dash.on(dashjs.MediaPlayer.events.STREAM_INITIALIZED, () => {
     renderDashLevels();
     const names = source.audio || [];
@@ -1211,7 +1521,7 @@ function playHls(source){
     $("videoEmpty").innerHTML = `<div><div class="big">😔</div>Поток не поддерживается этим браузером</div>`;
     return;
   }
-  const url = "/api/proxy?url=" + encodeURIComponent(source.hls || source.mp4);
+  const url = "/api/proxy?url=" + encodeURIComponent(source.hls || source.mp4) + "&src=" + srcHint();
   if(source.hls && window.Hls && Hls.isSupported()){
     hls = new Hls({
       maxBufferLength: 60, maxBufferSize: 80 * 1000 * 1000, backBufferLength: 30,
@@ -1286,10 +1596,11 @@ function setTab(t){ document.querySelectorAll("#tabbar button").forEach(b => b.c
 document.querySelectorAll("#tabbar button").forEach(b => b.onclick = () => {
   const t = b.dataset.tab;
   if(t === "me"){ hap(); if(typeof window.k88OpenCab === "function") window.k88OpenCab(); return; }
+  if(t && t.indexOf("browse:") === 0){ hap("s"); setTab(t); return runBrowse(t.slice(7)); }
   setTab(t);
   if(t === "home") return goHome();
   if(t === "search"){ view("home"); window.scrollTo({top:0}); setTimeout(() => $("q").focus(), 50); return; }
-  runSearch(t, t === "Сериал" ? "Сериалы" : t === "Мультфильм" ? "Мультфильмы" : t);
+  runSearch(t, t);
 });
 document.addEventListener("click", e => { if(e.target.closest(".pill,.ep,.g-chip,.tabbar button,.card,.chip,.opt,.btn")) hap(); }, true);
 

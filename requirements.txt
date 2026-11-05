@@ -3,3 +3,6 @@ requests>=2.31
 beautifulsoup4>=4.12
 gunicorn>=21.2
 python-telegram-bot>=21.0
+curl_cffi>=0.7
+Flask-Compress>=1.15
+Pillow>=10.0
