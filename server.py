@@ -860,47 +860,101 @@ _hd_local = threading.local()
 _hd_direct_local = threading.local()
 
 
-def _hd_session():
-    s = getattr(_hd_local, "session", None)
+def _hd_session(proxy_url=None):
+    """Сессия на (поток, шлюз): keep-alive + cookies Cloudflare внутри потока.
+
+    Отдельная сессия на каждый шлюз — чтобы перебирать входы, не теряя cookies.
+    proxy_url="" — напрямую (без прокси).
+    """
+    if proxy_url is None:
+        proxy_url = _pick_proxy() or None
+    if not proxy_url:
+        s = getattr(_hd_direct_local, "session", None)
+        if s is None:
+            s = _cffi.Session(impersonate=HDREZKA_IMPERSONATE)
+            _hd_direct_local.session = s
+        return s
+    sessions = getattr(_hd_local, "sessions", None)
+    if sessions is None:
+        sessions = {}
+        _hd_local.sessions = sessions
+    s = sessions.get(proxy_url)
     if s is None:
         s = _cffi.Session(impersonate=HDREZKA_IMPERSONATE,
-                          proxies=make_proxy() or None)
-        _hd_local.session = s
+                          proxies={"http": proxy_url, "https": proxy_url})
+        sessions[proxy_url] = s
     return s
 
 
 def _hd_direct_session():
     """Сессия без прокси: эмбед-плееры (nextembed и др.) банят прокси-IP (422)."""
-    s = getattr(_hd_direct_local, "session", None)
-    if s is None:
-        s = _cffi.Session(impersonate=HDREZKA_IMPERSONATE)
-        _hd_direct_local.session = s
-    return s
+    return _hd_session("")
+
+
+def _hd_gateways():
+    """Шлюзы для страниц hdrezka: провайдер режет 429 на CONNECT на конкретном
+    входе, поэтому перебираем шлюзы, а в самом конце пробуем напрямую."""
+    cands = list(_proxy_candidates())
+    if "" not in cands:
+        cands.append("")
+    return cands
+
+
+def _hd_request(method, url, use_proxy=True, headers=None, data=None, timeout=30):
+    """Запрос к hdrezka с перебором шлюзов прокси при 429/5xx и сбое туннеля.
+
+    Раньше здесь был единственный фиксированный прокси — из-за этого страницы
+    фильмов и поиск падали целиком, когда этот вход отвечал 429.
+    """
+    if _cffi is not None:
+        if not use_proxy:
+            s = _hd_direct_session()
+            return _retry_get(
+                lambda: s.request(method, url, headers=headers, data=data, timeout=timeout),
+                attempts=1, delay=0.6)
+        last_resp = last_exc = None
+        for i, purl in enumerate(_hd_gateways()):
+            s = _hd_session(purl)
+            try:
+                r = _retry_get(
+                    lambda s=s: s.request(method, url, headers=headers, data=data,
+                                          timeout=timeout),
+                    attempts=3 if i == 0 else 1, delay=0.6)
+            except Exception as e:
+                last_exc = e
+                continue
+            if r is not None and r.status_code == 200:
+                return r
+            if r is not None:
+                if r.status_code in _RETRY_CODES:
+                    _note_proxy_limited()
+                if last_resp is not None:
+                    last_resp.close()
+                last_resp = r
+        if last_resp is not None:
+            return last_resp
+        if last_exc is not None:
+            raise last_exc
+        raise RuntimeError("hdrezka недоступна")
+    sess = _get_session()
+    proxies = make_proxy() if use_proxy else None
+    return _retry_get(
+        lambda: sess.request(method, url, headers={**default_headers, **(headers or {})},
+                             data=data, timeout=timeout, proxies=proxies),
+        attempts=3 if use_proxy else 1, delay=0.6)
 
 
 def _hd_get(url, referer=None, timeout=30, use_proxy=True, headers=None):
     h = {"Referer": referer or HDREZKA_ORIGIN}
     if headers:
         h.update(headers)
-    if _cffi is not None:
-        s = _hd_session() if use_proxy else _hd_direct_session()
-        return _retry_get(lambda: s.get(url, headers=h, timeout=timeout),
-                          attempts=3 if use_proxy else 1, delay=0.6)
-    return _retry_get(
-        lambda: _get_session().get(url, headers={**default_headers, **h},
-                                   timeout=timeout, proxies=make_proxy() if use_proxy else None),
-        attempts=3 if use_proxy else 1, delay=0.6)
+    return _hd_request("GET", url, use_proxy=use_proxy, headers=h, timeout=timeout)
 
 
 def _hd_post(url, data, referer=None, timeout=30):
     headers = {"Referer": referer or HDREZKA_ORIGIN}
-    if _cffi is not None:
-        return _retry_get(lambda: _hd_session().post(url, data=data, headers=headers,
-                                                     timeout=timeout), attempts=3, delay=0.6)
-    return _retry_get(
-        lambda: _get_session().post(url, headers={**default_headers, **headers},
-                                    data=data, timeout=timeout, proxies=make_proxy()),
-        attempts=3, delay=0.6)
+    return _hd_request("POST", url, use_proxy=True, headers=headers, data=data,
+                       timeout=timeout)
 
 
 def _hd_abs(src):
