@@ -1807,7 +1807,7 @@ $("player").addEventListener("ended", () => {
   };
 
   /* ---- панель управления ---- */
-  let hideT = null, scrubbing = false;
+  let hideT = null, scrubbing = false, scrubT = 0;   // scrubT — превью позиции при перемотке
   function showCtl(){ shell.classList.add("ctls"); clearTimeout(hideT); hideT = setTimeout(() => { if(!vp.paused && !scrubbing) shell.classList.remove("ctls"); }, 3200); }
   function hideCtl(){ shell.classList.remove("ctls"); clearTimeout(hideT); }
   function setPlayIcon(){ playBtn.innerHTML = vp.paused ? ICO.play : ICO.pause; }
@@ -1836,7 +1836,9 @@ $("player").addEventListener("ended", () => {
   }
 
   function paintProgress(){
-    const d = vp.duration || 0, c = vp.currentTime || 0, p = d ? c/d : 0;
+    // во время протяжки показываем превью, а не реальную позицию: иначе
+    // timeupdate будет дёргать ползунок назад
+    const d = vp.duration || 0, c = scrubbing ? scrubT : (vp.currentTime || 0), p = d ? c/d : 0;
     prog.style.width = (p*100) + "%";
     dot.style.left = (p*100) + "%";
     $("vcCur").textContent = clock(c);
@@ -1847,14 +1849,22 @@ $("player").addEventListener("ended", () => {
     try{ if(vp.buffered.length && vp.duration) buf.style.width = (vp.buffered.end(vp.buffered.length-1)/vp.duration*100) + "%"; }catch(e){}
   });
 
-  /* ---- перемотка по полосе ---- */
+  /* ---- перемотка по полосе ----
+     Во время протяжки только показываем превью. Реальный seek выполняем один
+     раз — на отпускании: на iPhone (нативный HLS) каждое присваивание
+     currentTime запускает докачку сегмента, и от частых значений плеер виснет. */
   const bx = e => { const r = bar.getBoundingClientRect(); return clamp((e.clientX - r.left) / r.width, 0, 1); };
-  function seekClientX(e){ if(!vp.duration) return; try{ vp.currentTime = bx(e) * vp.duration; }catch(err){} paintProgress(); }
-  bar.addEventListener("pointerdown", e => { e.stopPropagation(); scrubbing = true; try{ bar.setPointerCapture(e.pointerId); }catch(err){} seekClientX(e); showCtl(); });
+  function seekClientX(e){ if(!vp.duration) return; scrubbing = true; scrubT = bx(e) * vp.duration; paintProgress(); }
+  function endScrub(){
+    if(!scrubbing) return;
+    scrubbing = false;
+    if(vp.duration){ try{ vp.currentTime = scrubT; }catch(err){} }
+    paintProgress(); showCtl();
+  }
+  bar.addEventListener("pointerdown", e => { e.stopPropagation(); try{ bar.setPointerCapture(e.pointerId); }catch(err){} seekClientX(e); showCtl(); });
   bar.addEventListener("pointermove", e => { if(scrubbing) seekClientX(e); });
-  const stopScrub = () => { if(!scrubbing) return; scrubbing = false; showCtl(); };
-  bar.addEventListener("pointerup", stopScrub);
-  bar.addEventListener("pointercancel", stopScrub);
+  bar.addEventListener("pointerup", endScrub);
+  bar.addEventListener("pointercancel", endScrub);
 
   /* ---- скорость ---- */
   function paintRate(){ rateBtn.firstElementChild.textContent = (vp.playbackRate === 1 ? 1 : +vp.playbackRate.toFixed(2)) + "x"; }
@@ -1952,9 +1962,10 @@ $("player").addEventListener("ended", () => {
     if(mode === "seek"){
       if(!vp.duration) return;
       const dur = vp.duration, delta = dx / ges.clientWidth * Math.min(dur, 240);
-      vp.currentTime = clamp(base + delta, 0, dur);
+      scrubbing = true;                        // превью, seek применяем на отпускании
+      scrubT = clamp(base + delta, 0, dur);
       paintProgress();
-      hudShow(null, clock(vp.currentTime) + " / " + clock(dur));
+      hudShow(null, clock(scrubT) + " / " + clock(dur));
     }else{
       const delta = -dy / (ges.clientHeight * 0.72);
       if(mode === "bri"){
@@ -1970,10 +1981,14 @@ $("player").addEventListener("ended", () => {
   });
   ges.addEventListener("pointerup", e => {
     if(!active) return; active = false;
-    if(!moved && !mode) tap(e);
+    if(mode === "seek") endScrub();          // применить перемотку жестом
+    else if(!moved && !mode) tap(e);
     moved = false; mode = "";
   });
-  ges.addEventListener("pointercancel", () => { active = false; moved = false; mode = ""; });
+  ges.addEventListener("pointercancel", () => {
+    if(mode === "seek") endScrub();
+    active = false; moved = false; mode = "";
+  });
 
   /* ---- оверлей показываем только когда плеер активен ---- */
   const syncReady = () => shell.classList.toggle("ready", !vp.classList.contains("hidden"));
