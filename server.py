@@ -55,10 +55,10 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 KINOGO_ORIGIN = os.environ.get("KINOGO_ORIGIN", "https://kinogo.sarl").rstrip("/")
 HDREZKA_ORIGIN = os.environ.get("HDREZKA_ORIGIN", "https://hdrezka.my/").rstrip("/") + "/"
 PROXY_GATEWAYS = {
-    "prt": "79.127.168.43",   # в замере оказался самым быстрым
     "usa": "109.204.36.9",
     "bra": "79.127.208.74",
     "nzl": "62.93.164.201",
+    "prt": "79.127.168.43",   # сейчас часто недоступен — держим последним
 }
 PROXY_LOGIN = "y6Ajblea_1"
 PROXY_PASSWORD = "pyR6Nr5Wnm"
@@ -66,7 +66,7 @@ PROXY_PORT = "50100"          # 50100 = HTTP(S), 50101 = SOCKS5
 
 
 def _proxy_for(gateway):
-    host = PROXY_GATEWAYS.get(gateway) or PROXY_GATEWAYS["prt"]
+    host = PROXY_GATEWAYS.get(gateway) or PROXY_GATEWAYS["usa"]
     return f"http://{PROXY_LOGIN}:{PROXY_PASSWORD}@{host}:{PROXY_PORT}"
 
 
@@ -77,7 +77,7 @@ def _pick_proxy():
         return ""
     if raw:
         return raw
-    return _proxy_for(os.environ.get("PROXY_GATEWAY", "prt").strip().lower())
+    return _proxy_for(os.environ.get("PROXY_GATEWAY", "usa").strip().lower())
 
 
 def _proxy_candidates():
@@ -90,7 +90,7 @@ def _proxy_candidates():
         return []
     if os.environ.get("HDREZKA_PROXY", "").strip():   # свой прокси — ротации нет
         return [PROXY]
-    active = os.environ.get("PROXY_GATEWAY", "prt").strip().lower()
+    active = os.environ.get("PROXY_GATEWAY", "usa").strip().lower()
     order = [active] + [g for g in PROXY_GATEWAYS if g != active]
     out = []
     for gw in order:
@@ -286,21 +286,47 @@ def _retry_get(fn, attempts=3, delay=0.5):
     return None
 
 
-def _cffi_session(proxied):
-    attr = "proxy_session" if proxied else "direct_session"
-    s = getattr(_video_local, attr, None)
+def _cffi_session(proxied, proxy_url=None):
+    # Сессия на (поток, транспорт): keep-alive для сегментов. Для прокси сессия
+    # отдельная на каждый шлюз, чтобы можно было перебирать их без пересоздания.
+    sessions = getattr(_video_local, "sessions", None)
+    if sessions is None:
+        sessions = {}
+        _video_local.sessions = sessions
+    if proxied:
+        purl = proxy_url or VIDEO_PROXY
+        if not purl:
+            return None
+        key, cfg = "p:" + purl, {"http": purl, "https": purl}
+    else:
+        key, cfg = "direct", None
+    s = sessions.get(key)
     if s is None:
-        s = _cffi.Session(impersonate=HDREZKA_IMPERSONATE,
-                          proxies=(make_video_proxy() or None) if proxied else None)
-        setattr(_video_local, attr, s)
+        s = _cffi.Session(impersonate=HDREZKA_IMPERSONATE, proxies=cfg)
+        sessions[key] = s
     return s
 
 
-def _cffi_try(headers, url, stream, timeout, proxied):
+def _cffi_try(headers, url, stream, timeout, proxied, proxy_url=None):
     try:
-        return _cffi_session(proxied).get(url, headers=headers, stream=stream, timeout=timeout)
+        s = _cffi_session(proxied, proxy_url)
+        if s is None:
+            return None
+        return s.get(url, headers=headers, stream=stream, timeout=timeout)
     except Exception:
         return None
+
+
+def _video_proxy_candidates():
+    """Шлюзы для видео по порядку. Провайдер режет по лимиту соединений и отдельные
+    входы отваливаются, поэтому сегменты/плейлисты так же перебирают шлюзы, как и
+    страницы каталога (иначе один мёртвый вход ломает и воспроизведение, и перемотку)."""
+    if not VIDEO_PROXY:
+        return []
+    explicit = os.environ.get("VIDEO_PROXY", "").strip()
+    if explicit and explicit.lower() not in ("off", "none", "direct"):
+        return [VIDEO_PROXY]              # свой прокси — без ротации
+    return _proxy_candidates() or [VIDEO_PROXY]
 
 
 def video_get(url, headers=None, stream=False, timeout=30):
@@ -333,20 +359,24 @@ def video_get(url, headers=None, stream=False, timeout=30):
                     if VIDEO_DIRECT != "on":
                         _proxy_memo_set(root, True)
 
-            # 2) через прокси (прямой доступ закрыт или выключен).
-            # Повторяем с паузой: провайдер отдаёт 429 при всплеске запросов.
+            # 2) через прокси (прямой доступ закрыт или выключен). Перебираем
+            # шлюзы: провайдер режет по лимиту (429) и отдельные входы отваливаются,
+            # а для мобильного HLS это ломает и воспроизведение, и перемотку.
             if VIDEO_PROXY and VIDEO_DIRECT != "on":
-                r = _retry_get(lambda: _cffi_try(cffi_headers, url, stream, timeout,
-                                                 proxied=True), attempts=3, delay=0.6)
-                if _video_ok(r):
-                    _proxy_memo_set(root, True)
-                    if prefer is None:
-                        _memo_set(root, True)
-                    return r
-                if r is not None:
-                    if r.status_code in _RETRY_CODES:
-                        _note_proxy_limited()
-                    r.close()
+                for purl in _video_proxy_candidates():
+                    r = _retry_get(
+                        lambda p=purl: _cffi_try(cffi_headers, url, stream, timeout,
+                                                 proxied=True, proxy_url=p),
+                        attempts=2, delay=0.5)
+                    if _video_ok(r):
+                        _proxy_memo_set(root, True)
+                        if prefer is None:
+                            _memo_set(root, True)
+                        return r
+                    if r is not None:
+                        if r.status_code in _RETRY_CODES:
+                            _note_proxy_limited()
+                        r.close()
             _memo_set(root, False)
     return _retry_get(
         lambda: _get_session().get(url, headers=headers or None, stream=stream,

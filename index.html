@@ -1838,7 +1838,7 @@ $("player").addEventListener("ended", () => {
   function paintProgress(){
     // во время протяжки показываем превью, а не реальную позицию: иначе
     // timeupdate будет дёргать ползунок назад
-    const d = vp.duration || 0, c = scrubbing ? scrubT : (vp.currentTime || 0), p = d ? c/d : 0;
+    const d = mediaDur(), c = scrubbing ? scrubT : (vp.currentTime || 0), p = d ? c/d : 0;
     prog.style.width = (p*100) + "%";
     dot.style.left = (p*100) + "%";
     $("vcCur").textContent = clock(c);
@@ -1853,13 +1853,29 @@ $("player").addEventListener("ended", () => {
      Во время протяжки только показываем превью. Реальный seek выполняем один
      раз — на отпускании: на iPhone (нативный HLS) каждое присваивание
      currentTime запускает докачку сегмента, и от частых значений плеер виснет. */
+  // Нативный HLS на iOS отдаёт duration с задержкой, а присвоенный currentTime
+  // «не доезжает», пока элемент на паузе. Поэтому берём длительность из seekable,
+  // если duration ещё нет, и после перемотки возобновляем воспроизведение, если
+  // видео играло до неё (иначе приходится жать play и позиция остаётся старой).
+  function mediaDur(){
+    const d = vp.duration;
+    if(isFinite(d) && d > 0) return d;
+    try{ const s = vp.seekable; if(s && s.length){ const e = s.end(s.length - 1); if(isFinite(e) && e > 0) return e; } }catch(err){}
+    return 0;
+  }
+  function seekTo(t){
+    const d = mediaDur(); if(!d) return;
+    const wasPlaying = !vp.paused;
+    try{ vp.currentTime = clamp(t, 0, d); }catch(err){}
+    if(wasPlaying){ const p = vp.play(); if(p && p.catch) p.catch(() => {}); }
+    paintProgress();
+  }
   const bx = e => { const r = bar.getBoundingClientRect(); return clamp((e.clientX - r.left) / r.width, 0, 1); };
-  function seekClientX(e){ if(!vp.duration) return; scrubbing = true; scrubT = bx(e) * vp.duration; paintProgress(); }
+  function seekClientX(e){ const d = mediaDur(); if(!d) return; scrubbing = true; scrubT = bx(e) * d; paintProgress(); }
   function endScrub(){
     if(!scrubbing) return;
     scrubbing = false;
-    if(vp.duration){ try{ vp.currentTime = scrubT; }catch(err){} }
-    paintProgress(); showCtl();
+    seekTo(scrubT); showCtl();
   }
   bar.addEventListener("pointerdown", e => { e.stopPropagation(); try{ bar.setPointerCapture(e.pointerId); }catch(err){} seekClientX(e); showCtl(); });
   bar.addEventListener("pointermove", e => { if(scrubbing) seekClientX(e); });
@@ -1924,9 +1940,8 @@ $("player").addEventListener("ended", () => {
     hudT = setTimeout(() => hud.classList.remove("show"), 750);
   }
   function seekBy(d){
-    if(!vp.duration) return;
-    vp.currentTime = clamp((vp.currentTime || 0) + d, 0, vp.duration);
-    paintProgress();
+    if(!mediaDur()) return;
+    seekTo((vp.currentTime || 0) + d);
     hudShow(d < 0 ? ICO.seekL : ICO.seekR, (d > 0 ? "+" : "") + d + " сек");
   }
   function tap(e){
@@ -1960,8 +1975,9 @@ $("player").addEventListener("ended", () => {
       else { mode = (sx - ges.getBoundingClientRect().left) < ges.clientWidth/2 ? "bri" : "vol"; base = mode === "bri" ? brightness : vp.volume; }
     }
     if(mode === "seek"){
-      if(!vp.duration) return;
-      const dur = vp.duration, delta = dx / ges.clientWidth * Math.min(dur, 240);
+      const dur = mediaDur();
+      if(!dur) return;
+      const delta = dx / ges.clientWidth * Math.min(dur, 240);
       scrubbing = true;                        // превью, seek применяем на отпускании
       scrubT = clamp(base + delta, 0, dur);
       paintProgress();
